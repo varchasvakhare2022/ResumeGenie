@@ -1,0 +1,30 @@
+# Node / Vite
+node_modules/
+dist/
+.vite/
+*.log
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+ehthumbs.db
+

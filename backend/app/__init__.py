@@ -1,0 +1,3 @@
+"""ResumeGenie FastAPI application package."""
+
+
