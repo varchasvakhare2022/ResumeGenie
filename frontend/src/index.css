@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --brand-primary: #3b82f6;
+    --brand-secondary: #8b5cf6;
+    --brand-accent: #10b981;
+    --brand-dark: #1e293b;
+    --brand-light: #f8fafc;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+}
+
+/* Print Styles for Resume Export */
+@media print {
+  @page {
+    size: A4;
+    margin: 1in;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  /* Hide non-printable elements */
+  .no-print,
+  button,
+  .export-button,
+  .ai-assist-button {
+    display: none !important;
+  }
+
+  /* Resume container */
+  .resume-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    border: none;
+  }
+
+  /* Prevent page breaks */
+  .resume-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Links */
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+
+  a[href^='http']:after {
+    content: ' (' attr(href) ')';
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  /* Colors */
+  * {
+    color: #000 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Headers */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Lists */
+  ul, ol {
+    page-break-inside: avoid;
+  }
+
+  /* Images */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Tables */
+  table {
+    page-break-inside: avoid;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  /* Ensure content fits on page */
+  .resume-content {
+    overflow: visible;
+  }
+}
+
+/* A4 Size Styles for Preview */
+@media screen {
+  .resume-print-preview {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 25.4mm; /* 1 inch margin */
+    margin: 0 auto;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .resume-print-preview.letter {
+    width: 215.9mm;
+    min-height: 279.4mm;
+  }
+
+  .resume-print-preview.margin-small {
+    padding: 12.7mm; /* 0.5 inch */
+  }
+
+  .resume-print-preview.margin-medium {
+    padding: 25.4mm; /* 1 inch */
+  }
+
+  .resume-print-preview.margin-large {
+    padding: 38.1mm; /* 1.5 inch */
+  }
+}
+

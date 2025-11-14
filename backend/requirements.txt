@@ -1,0 +1,20 @@
+fastapi
+uvicorn[standard]
+pydantic>=2
+pydantic-settings
+python-dotenv
+httpx
+motor
+orjson
+python-multipart
+aiofiles
+aiolimiter
+requests
+pytest
+pytest-asyncio
+pytest-cov
+# Optional: For service account authentication (Cloud Run/Anthos)
+# google-auth
+# google-auth-oauthlib
+# google-auth-httplib2
+
