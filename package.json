@@ -1,0 +1,6 @@
+{
+  "name": "resumegenie",
+  "private": true,
+  "workspaces": ["frontend"]
+}
+
