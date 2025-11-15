@@ -10,7 +10,7 @@ export default function Stepper({ steps, currentStep, onStepClick }: StepperProp
   return (
     <div className="mb-8">
       <div className="overflow-x-auto pb-2 -mx-2 px-2">
-        <div className="flex items-center min-w-max gap-2">
+        <div className="flex items-center min-w-max gap-3">
           {steps.map((step, index) => {
             const isCompleted = index < currentStep
             const isCurrent = index === currentStep
@@ -56,7 +56,7 @@ export default function Stepper({ steps, currentStep, onStepClick }: StepperProp
                 {/* Connector Line */}
                 {index < steps.length - 1 && (
                   <div
-                    className={`w-8 md:w-12 h-0.5 mx-1 md:mx-2 flex-shrink-0 ${
+                    className={`w-10 md:w-16 h-0.5 mx-2 flex-shrink-0 ${
                       isCompleted ? 'bg-brand-primary' : 'bg-gray-300'
                     }`}
                   />

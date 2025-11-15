@@ -24,25 +24,25 @@ export default function TemplatePicker({ selectedTemplate, onTemplateChange }: T
   ]
 
   return (
-    <div className="mb-6">
-      <label className="block text-sm font-medium text-gray-700 mb-2">Resume Template</label>
-      <div className="flex gap-4">
+    <div className="mb-2">
+      <label className="block text-xs font-medium text-gray-700 mb-1.5">Resume Template</label>
+      <div className="flex gap-2">
         {templates.map((template) => (
           <button
             key={template.type}
             type="button"
             onClick={() => onTemplateChange(template.type)}
-            className={`flex-1 p-4 border-2 rounded-lg transition-all ${
+            className={`flex-1 p-2 border-2 rounded-lg transition-all ${
               selectedTemplate === template.type
                 ? 'border-brand-primary bg-blue-50'
                 : 'border-gray-200 hover:border-gray-300 bg-white'
             }`}
           >
-            <div className="flex items-center justify-center mb-2 text-brand-primary">
-              {template.icon}
+            <div className="flex items-center justify-center mb-1 text-brand-primary">
+              <div className="scale-75">{template.icon}</div>
             </div>
-            <div className="font-semibold text-gray-900">{template.name}</div>
-            <div className="text-xs text-gray-500 mt-1">{template.description}</div>
+            <div className="font-semibold text-sm text-gray-900">{template.name}</div>
+            <div className="text-xs text-gray-500 leading-tight">{template.description}</div>
           </button>
         ))}
       </div>

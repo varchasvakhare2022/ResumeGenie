@@ -104,12 +104,23 @@
     color: #666;
   }
 
-  /* Colors */
+  /* Colors - Allow ModernB template to preserve its colors */
   * {
-    color: #000 !important;
-    background: transparent !important;
     box-shadow: none !important;
     text-shadow: none !important;
+  }
+  
+  /* For ClassicA template - black and white */
+  .resume-container:not(.resume-modern) * {
+    color: #000 !important;
+    background: transparent !important;
+  }
+  
+  /* For ModernB template - preserve colors */
+  .resume-container.resume-modern * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
   /* Headers */

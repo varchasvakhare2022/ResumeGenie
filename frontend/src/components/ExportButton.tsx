@@ -87,6 +87,64 @@ export default function ExportButton({ contentRef, className = '' }: ExportButto
         * {
           print-color-adjust: exact;
           -webkit-print-color-adjust: exact;
+          color-adjust: exact;
+        }
+        
+        /* Ensure ModernB template preserves all colors */
+        .resume-modern,
+        .resume-modern * {
+          print-color-adjust: exact !important;
+          -webkit-print-color-adjust: exact !important;
+          color-adjust: exact !important;
+          background-color: inherit !important;
+          color: inherit !important;
+        }
+        
+        /* Preserve dark sidebar background */
+        .resume-modern [style*="background-color: #2C2C2C"],
+        .resume-modern [style*="background-color:#2C2C2C"],
+        .resume-modern [style*="backgroundColor: '#2C2C2C'"],
+        .resume-modern [style*="backgroundColor: '#2c2c2c'"],
+        .resume-modern [style*="backgroundColor:#2C2C2C"],
+        .resume-modern [style*="backgroundColor:#2c2c2c"] {
+          background-color: #2C2C2C !important;
+          print-color-adjust: exact !important;
+          -webkit-print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        
+        /* Preserve white text in sidebar */
+        .resume-modern [style*="color: #FFFFFF"],
+        .resume-modern [style*="color:#FFFFFF"],
+        .resume-modern [style*="color: '#FFFFFF'"],
+        .resume-modern [style*="color: '#ffffff'"] {
+          color: #FFFFFF !important;
+          print-color-adjust: exact !important;
+          -webkit-print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        
+        /* Preserve yellow accent color for progress bars */
+        .resume-modern .progress-bar-fill,
+        .resume-modern [data-color="#FFD700"],
+        .resume-modern [style*="background-color: #FFD700"],
+        .resume-modern [style*="background-color:#FFD700"],
+        .resume-modern [style*="backgroundColor: '#FFD700'"],
+        .resume-modern [style*="backgroundColor: '#FFD700'"],
+        .resume-modern [style*="backgroundColor: '#ffd700'"],
+        .resume-modern [style*="backgroundColor:#FFD700"] {
+          background-color: #FFD700 !important;
+          print-color-adjust: exact !important;
+          -webkit-print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        
+        /* Preserve progress bar track */
+        .resume-modern .progress-bar-track {
+          background-color: #444444 !important;
+          print-color-adjust: exact !important;
+          -webkit-print-color-adjust: exact !important;
+          color-adjust: exact !important;
         }
       }
     `,

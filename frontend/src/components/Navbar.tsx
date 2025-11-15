@@ -92,37 +92,67 @@ export default function Navbar() {
           </nav>
         )
 
-      case 'sidebar': // Builder - Vertical Sidebar with Horizontal Flow
+      case 'sidebar': // Builder - Professional Clean Navigation with Enhanced Design
         return (
-          <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+          <nav 
+            className="sticky top-0 z-50 relative overflow-hidden"
+            style={{
+              background: `linear-gradient(to bottom, ${themeConfig.colors.light}, white)`,
+              borderBottom: `2px solid ${themeConfig.colors.primary}15`,
+              boxShadow: `0 2px 10px rgba(0,0,0,0.05)`
+            }}
+          >
+            {/* Subtle top accent line */}
+            <div 
+              className="absolute top-0 left-0 right-0 h-0.5"
+              style={{
+                background: `linear-gradient(90deg, ${themeConfig.colors.primary}, ${themeConfig.colors.secondary}, ${themeConfig.colors.accent})`
+              }}
+            ></div>
+
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center h-20">
-                {/* Logo Section */}
+                {/* Enhanced Logo Section */}
                 <Link 
                   to="/" 
-                  className="flex items-center gap-3 group mr-8"
+                  className="flex items-center gap-3 group mr-10"
                   style={{ color: themeConfig.colors.primary }}
                 >
+                  {/* Glow effect on hover */}
                   <div 
-                    className="relative w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white text-lg shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                    className="absolute opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-500"
                     style={{
-                      background: `linear-gradient(135deg, ${themeConfig.colors.primary}, ${themeConfig.colors.secondary})`,
-                      boxShadow: `0 4px 12px rgba(${parseInt(themeConfig.colors.primary.slice(1, 3), 16)}, ${parseInt(themeConfig.colors.primary.slice(3, 5), 16)}, ${parseInt(themeConfig.colors.primary.slice(5, 7), 16)}, 0.3)`
+                      background: `radial-gradient(circle, ${themeConfig.colors.primary}, transparent)`,
+                      width: '60px',
+                      height: '60px',
+                      borderRadius: '50%',
+                      transform: 'translate(-10px, -10px)'
                     }}
-                  >
-                    RG
-                  </div>
-                  <span className="text-xl font-bold hidden md:block">ResumeGenie</span>
-                </Link>
-
-                {/* Horizontal Flow Navigation with Connecting Line */}
-                <div className="flex-1 flex items-center gap-1 relative">
-                  {/* Connecting line background */}
-                  <div 
-                    className="absolute left-0 right-0 h-0.5 opacity-20"
-                    style={{ backgroundColor: themeConfig.colors.primary }}
                   ></div>
                   
+                  <div 
+                    className="relative w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white text-lg shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 group-hover:-rotate-3"
+                    style={{
+                      background: `linear-gradient(135deg, ${themeConfig.colors.primary}, ${themeConfig.colors.secondary})`,
+                      boxShadow: `0 6px 20px rgba(${parseInt(themeConfig.colors.primary.slice(1, 3), 16)}, ${parseInt(themeConfig.colors.primary.slice(3, 5), 16)}, ${parseInt(themeConfig.colors.primary.slice(5, 7), 16)}, 0.25)`
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl opacity-20 bg-white animate-pulse"></div>
+                    <span className="relative z-10">RG</span>
+                  </div>
+                  <div className="hidden md:block">
+                    <span className="text-xl font-bold block">ResumeGenie</span>
+                    <span 
+                      className="text-xs font-medium uppercase tracking-wider opacity-70"
+                      style={{ color: themeConfig.colors.primary }}
+                    >
+                      Resume Builder
+                    </span>
+                  </div>
+                </Link>
+
+                {/* Enhanced Horizontal Navigation with Better Design */}
+                <div className="flex-1 flex items-center gap-2 relative">
                   {navLinks.map((link, index) => {
                     const Icon = link.icon
                     const active = isActive(link.path)
@@ -133,46 +163,78 @@ export default function Navbar() {
                         <Link
                           to={link.path}
                           className={`
-                            relative flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all duration-300
-                            ${active ? 'translate-y-[-2px]' : 'hover:translate-y-[-1px]'}
+                            relative flex flex-col items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl transition-all duration-300
+                            ${active ? 'scale-105' : 'hover:scale-102'}
                           `}
                           style={active ? {
                             background: `linear-gradient(135deg, ${themeConfig.colors.primary}, ${themeConfig.colors.secondary})`,
                             color: 'white',
-                            boxShadow: `0 4px 12px rgba(${parseInt(themeConfig.colors.primary.slice(1, 3), 16)}, ${parseInt(themeConfig.colors.primary.slice(3, 5), 16)}, ${parseInt(themeConfig.colors.primary.slice(5, 7), 16)}, 0.3)`
+                            boxShadow: `0 6px 20px rgba(${parseInt(themeConfig.colors.primary.slice(1, 3), 16)}, ${parseInt(themeConfig.colors.primary.slice(3, 5), 16)}, ${parseInt(themeConfig.colors.primary.slice(5, 7), 16)}, 0.3),
+                                        inset 0 1px 0 rgba(255,255,255,0.2)`,
+                            transform: 'translateY(-2px)'
                           } : {
-                            color: themeConfig.colors.primary + 'AA'
+                            color: '#64748b',
+                            backgroundColor: 'transparent'
                           }}
                           onMouseEnter={(e) => {
                             if (!active) {
                               e.currentTarget.style.color = themeConfig.colors.primary
-                              e.currentTarget.style.backgroundColor = themeConfig.colors.primary + '10'
+                              e.currentTarget.style.backgroundColor = themeConfig.colors.primary + '0D'
+                              e.currentTarget.style.transform = 'translateY(-1px)'
                             }
                           }}
                           onMouseLeave={(e) => {
                             if (!active) {
-                              e.currentTarget.style.color = themeConfig.colors.primary + 'AA'
+                              e.currentTarget.style.color = '#64748b'
                               e.currentTarget.style.backgroundColor = 'transparent'
+                              e.currentTarget.style.transform = 'translateY(0)'
                             }
                           }}
                         >
-                          <Icon size={20} className={active ? 'animate-bounce' : ''} />
-                          <span className="text-xs font-semibold hidden sm:block">{link.shortLabel}</span>
+                          {/* Icon with subtle animation */}
+                          <div className="relative">
+                            <Icon size={22} className={active ? 'animate-pulse' : ''} strokeWidth={active ? 2.5 : 2} />
+                            {active && (
+                              <div 
+                                className="absolute inset-0 rounded-full blur-md opacity-30"
+                                style={{ backgroundColor: 'white' }}
+                              ></div>
+                            )}
+                          </div>
+                          <span className="text-xs font-semibold hidden sm:block tracking-wide">{link.shortLabel}</span>
                           
-                          {/* Active indicator dot */}
+                          {/* Enhanced active indicator */}
                           {active && (
-                            <div 
-                              className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full"
-                              style={{ backgroundColor: themeConfig.colors.accent }}
-                            ></div>
+                            <>
+                              <div 
+                                className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full shadow-lg"
+                                style={{ 
+                                  backgroundColor: themeConfig.colors.accent,
+                                  boxShadow: `0 0 8px ${themeConfig.colors.accent}`
+                                }}
+                              ></div>
+                              {/* Subtle underline effect */}
+                              <div 
+                                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 rounded-full"
+                                style={{ 
+                                  background: `linear-gradient(90deg, transparent, ${themeConfig.colors.accent}, transparent)`,
+                                  opacity: 0.6
+                                }}
+                              ></div>
+                            </>
                           )}
                         </Link>
                         
-                        {/* Connecting line to next item */}
+                        {/* Enhanced connecting line */}
                         {!isLast && (
                           <div 
-                            className={`w-8 h-0.5 mx-1 ${active ? 'opacity-100' : 'opacity-20'}`}
-                            style={{ backgroundColor: themeConfig.colors.primary }}
+                            className={`w-6 h-0.5 mx-2 rounded-full transition-all duration-300 ${
+                              active ? 'opacity-100' : 'opacity-10'
+                            }`}
+                            style={{ 
+                              background: `linear-gradient(90deg, ${themeConfig.colors.primary}, ${themeConfig.colors.secondary})`,
+                              transform: active ? 'scaleX(1.2)' : 'scaleX(1)'
+                            }}
                           ></div>
                         )}
                       </div>

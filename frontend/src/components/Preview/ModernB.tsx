@@ -1,20 +1,11 @@
 import { forwardRef } from 'react'
 import { useResumeStore } from '../../store/useResumeStore'
 import TemplateFrame from './TemplateFrame'
+import { Phone, Mail, Globe, Briefcase, GraduationCap, FileText, Lightbulb, Heart } from 'lucide-react'
 
 const ModernB = forwardRef<HTMLDivElement>((props, ref) => {
   const { resume } = useResumeStore()
   const { personal, summary, experience, education, skills, projects, achievements, extras } = resume
-
-  // Group skills by category
-  const skillsByCategory = skills.reduce((acc, skill) => {
-    const category = skill.category || 'Other'
-    if (!acc[category]) {
-      acc[category] = []
-    }
-    acc[category].push(skill.name)
-    return acc
-  }, {} as Record<string, string[]>)
 
   // Format date range
   const formatDateRange = (start?: string, end?: string, current?: boolean) => {
@@ -24,249 +15,342 @@ const ModernB = forwardRef<HTMLDivElement>((props, ref) => {
     return startStr && endStr ? `${startStr} – ${endStr}` : startStr || endStr
   }
 
-  // Parse description into bullet points
-  const parseBullets = (text: string) => {
-    if (!text) return []
-    return text
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .map(line => {
-        // Remove existing bullet markers
-        return line.replace(/^[•\-\*]\s*/, '')
-      })
+  // Parse description into first sentence/paragraph
+  const getFirstSentence = (text: string) => {
+    if (!text) return ''
+    const firstLine = text.split('\n')[0].trim()
+    // Take first sentence or first 150 characters
+    const firstSentence = firstLine.split('.')[0] + (firstLine.includes('.') ? '.' : '')
+    return firstSentence.length > 150 ? firstSentence.substring(0, 150) + '...' : firstSentence
+  }
+
+  // Modern color scheme
+  const colors = {
+    sidebarBg: '#2C2C2C', // Dark charcoal gray
+    sidebarText: '#FFFFFF',
+    sidebarTextLight: '#CCCCCC',
+    accent: '#FFD700', // Yellow
+    mainBg: '#FFFFFF',
+    mainText: '#000000',
+    divider: '#E0E0E0',
   }
 
   return (
-    <TemplateFrame ref={ref} className="w-full max-w-full" style={{ fontFamily: 'Lato, Inter, Roboto, Calibri, Helvetica, sans-serif', userSelect: 'text', WebkitUserSelect: 'text' }}>
-      <div className="resume-section" style={{ lineHeight: '1.1', fontSize: '10px', color: '#000000', userSelect: 'text', WebkitUserSelect: 'text' }}>
-        {/* 1. HEADER / CONTACT INFORMATION - Same as ClassicA (centered, location on separate line) */}
-        <div style={{ marginBottom: '8px', borderBottom: '2px solid #000000', paddingBottom: '6px', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '2px', color: '#000000' }}>
-            {personal.firstName || 'First'} {personal.lastName || 'Last'}
-          </h1>
-          {personal.location && (
-            <div style={{ fontSize: '10px', color: '#000000', marginBottom: '4px' }}>
-              {personal.location}
+    <TemplateFrame ref={ref} className="w-full max-w-full resume-modern" style={{ fontFamily: 'Lato, Inter, Roboto, Calibri, Helvetica, sans-serif', userSelect: 'text', WebkitUserSelect: 'text', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact', colorAdjust: 'exact' }}>
+      <div className="resume-section" style={{ display: 'flex', minHeight: '100%', backgroundColor: colors.mainBg, userSelect: 'text', WebkitUserSelect: 'text', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact', colorAdjust: 'exact' }}>
+        {/* Left Sidebar - Dark with Yellow Accents */}
+        <div style={{ 
+          width: '35%', 
+          backgroundColor: colors.sidebarBg, 
+          color: colors.sidebarText,
+          padding: '24px 20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px',
+          printColorAdjust: 'exact',
+          WebkitPrintColorAdjust: 'exact',
+          colorAdjust: 'exact'
+        }}>
+          {/* Name and Title */}
+          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+            <h1 style={{ fontSize: '22px', fontWeight: 'bold', color: colors.sidebarText, marginBottom: '4px', lineHeight: '1.2' }}>
+              {personal.firstName || 'First'} {personal.lastName || 'Last'}
+            </h1>
+            {summary && (
+              <div style={{ fontSize: '11px', color: colors.sidebarTextLight, fontWeight: '500', marginTop: '4px' }}>
+                {summary.split('.')[0].substring(0, 50) || 'Professional'}
+              </div>
+            )}
+          </div>
+
+          {/* Contact Section */}
+          {(personal.email || personal.phone || personal.website || personal.linkedin || personal.github) && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <Phone size={14} color={colors.accent} />
+                <h2 style={{ fontSize: '12px', fontWeight: 'bold', color: colors.sidebarText }}>Contact</h2>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '10px' }}>
+                {personal.email && (
+                  <div>
+                    <div style={{ color: colors.sidebarText, fontWeight: '500', marginBottom: '2px' }}>Email</div>
+                    <div style={{ color: colors.sidebarTextLight }}>{personal.email}</div>
+                  </div>
+                )}
+                {personal.phone && (
+                  <div>
+                    <div style={{ color: colors.sidebarText, fontWeight: '500', marginBottom: '2px' }}>Phone</div>
+                    <div style={{ color: colors.sidebarTextLight }}>{personal.phone}</div>
+                  </div>
+                )}
+                {personal.website && (
+                  <div>
+                    <div style={{ color: colors.sidebarText, fontWeight: '500', marginBottom: '2px' }}>Website</div>
+                    <div style={{ color: colors.sidebarTextLight }}>{personal.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</div>
+                  </div>
+                )}
+                {personal.linkedin && (
+                  <div>
+                    <div style={{ color: colors.sidebarText, fontWeight: '500', marginBottom: '2px' }}>LinkedIn</div>
+                    <div style={{ color: colors.sidebarTextLight }}>{personal.linkedin.replace(/^https?:\/\//, '').replace(/\/$/, '')}</div>
+                  </div>
+                )}
+                {personal.github && (
+                  <div>
+                    <div style={{ color: colors.sidebarText, fontWeight: '500', marginBottom: '2px' }}>GitHub</div>
+                    <div style={{ color: colors.sidebarTextLight }}>{personal.github.replace(/^https?:\/\//, '').replace(/\/$/, '')}</div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
-          <div style={{ fontSize: '10px', color: '#000000', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px', marginTop: '4px' }}>
-            {personal.phone && <span>{personal.phone}</span>}
-            {personal.email && <span>| {personal.email}</span>}
-            {personal.linkedin && <span>| LinkedIn: {personal.linkedin}</span>}
-            {personal.github && <span>| GitHub: {personal.github}</span>}
-            {personal.website && <span>| {personal.website}</span>}
-          </div>
+
+          {/* Skills Section */}
+          {skills.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <Lightbulb size={14} color={colors.accent} />
+                <h2 style={{ fontSize: '12px', fontWeight: 'bold', color: colors.sidebarText }}>Skills</h2>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '10px' }}>
+                {skills.map((skill) => (
+                  <div key={skill.id} style={{ color: colors.sidebarText }}>
+                    {skill.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Interests Section */}
+          {extras.interests.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <Heart size={14} color={colors.accent} />
+                <h2 style={{ fontSize: '12px', fontWeight: 'bold', color: colors.sidebarText }}>Interests</h2>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '10px' }}>
+                {extras.interests.map((interest, idx) => (
+                  <div key={idx} style={{ color: colors.sidebarText }}>{interest}</div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* 2. PROFESSIONAL SUMMARY / OBJECTIVE - Original ModernB format (paragraph, not bullets) */}
-        {summary && (
-          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
-            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
-              Professional Summary
-            </h2>
-            <p style={{ fontSize: '10px', lineHeight: '1.15', color: '#000000', marginTop: '4px' }}>
-              {summary}
-            </p>
-          </div>
-        )}
-
-        {/* 3. SKILLS SECTION - BEFORE EXPERIENCE */}
-        {skills.length > 0 && (
-          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
-            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
-              Skills
-            </h2>
-            <div style={{ marginTop: '4px', fontSize: '10px', lineHeight: '1.15' }}>
-              {Object.entries(skillsByCategory).map(([category, skillList]) => (
-                <div key={category} style={{ marginBottom: '3px' }}>
-                  <span style={{ fontWeight: '600', color: '#000000' }}>{category}:</span>{' '}
-                  <span style={{ color: '#000000' }}>{skillList.join(', ')}</span>
+        {/* Right Main Content - White with Yellow Accents */}
+        <div style={{ 
+          width: '65%', 
+          backgroundColor: colors.mainBg, 
+          color: colors.mainText,
+          padding: '24px 28px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px'
+        }}>
+          {/* Profile Section */}
+          {summary && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#FFD700', display: 'flex', alignItems: 'center', justifyContent: 'center', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact', colorAdjust: 'exact' }}>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: colors.mainText }} />
                 </div>
-              ))}
+                <h2 style={{ fontSize: '13px', fontWeight: 'bold', color: colors.mainText }}>Profile</h2>
+              </div>
+              <p style={{ fontSize: '10px', lineHeight: '1.5', color: colors.mainText, marginLeft: '28px' }}>
+                {summary}
+              </p>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 4. EXPERIENCE / INTERNSHIPS / WORK - Original ModernB format (left-aligned, Position — Company) */}
-        {experience.length > 0 && (
-          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
-            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
-              Experience
-            </h2>
-            <div style={{ marginTop: '4px' }}>
-              {experience.map((exp) => {
-                const bullets = parseBullets(exp.description || '')
-                const dateRange = formatDateRange(exp.startDate, exp.endDate, exp.current)
-                const locationDate = [exp.location, dateRange].filter(Boolean).join(' | ')
-                
-                return (
-                  <div key={exp.id} style={{ marginBottom: '6px' }}>
-                    <div style={{ marginBottom: '2px' }}>
-                      <span style={{ fontSize: '10px', fontWeight: '600', color: '#000000' }}>
-                        {exp.position || 'Position'} — {exp.company || 'Company'}
-                      </span>
-                    </div>
-                    {locationDate && (
-                      <div style={{ fontSize: '10px', color: '#000000', marginBottom: '3px' }}>
-                        {locationDate}
-                      </div>
-                    )}
-                    {bullets.length > 0 && (
-                      <div style={{ marginLeft: '8px', fontSize: '10px', lineHeight: '1.15' }}>
-                        {bullets.slice(0, 5).map((bullet, idx) => (
-                          <div key={idx} style={{ marginBottom: '2px', color: '#000000' }}>
-                            • {bullet}
+          {/* Experience Section with Timeline */}
+          {experience.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#FFD700', display: 'flex', alignItems: 'center', justifyContent: 'center', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact', colorAdjust: 'exact' }}>
+                  <Briefcase size={12} color={colors.mainText} />
+                </div>
+                <h2 style={{ fontSize: '13px', fontWeight: 'bold', color: colors.mainText }}>Experience</h2>
+              </div>
+              <div style={{ position: 'relative', marginLeft: '10px', paddingLeft: '28px' }}>
+                {/* Timeline line */}
+                <div style={{ 
+                  position: 'absolute', 
+                  left: '4px', 
+                  top: '0', 
+                  bottom: '0', 
+                  width: '2px', 
+                  backgroundColor: colors.divider 
+                }} />
+                {experience.map((exp, idx) => {
+                  const dateRange = formatDateRange(exp.startDate, exp.endDate, exp.current)
+                  const description = getFirstSentence(exp.description || '')
+                  return (
+                    <div key={exp.id} style={{ position: 'relative', marginBottom: idx < experience.length - 1 ? '18px' : '0' }}>
+                      {/* Timeline dot */}
+                      <div style={{ 
+                        position: 'absolute', 
+                        left: '-32px', 
+                        top: '4px',
+                        width: '10px', 
+                        height: '10px', 
+                        borderRadius: '50%', 
+                        backgroundColor: '#FFD700',
+                        border: `2px solid ${colors.mainBg}`,
+                        zIndex: 1,
+                        printColorAdjust: 'exact',
+                        WebkitPrintColorAdjust: 'exact',
+                        colorAdjust: 'exact'
+                      }} />
+                      <div style={{ marginBottom: '4px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '600', color: colors.mainText, marginBottom: '2px' }}>
+                          {exp.position || 'Position'}
+                        </div>
+                        <div style={{ fontSize: '10px', color: colors.mainText, marginBottom: '2px' }}>
+                          {exp.company || 'Company'} {exp.location && `| ${exp.location}`}
+                        </div>
+                        {dateRange && (
+                          <div style={{ fontSize: '9px', color: '#666666', marginBottom: '4px' }}>
+                            {dateRange}
                           </div>
-                        ))}
+                        )}
                       </div>
-                    )}
-                  </div>
-                )
-              })}
+                      {description && (
+                        <div style={{ fontSize: '10px', lineHeight: '1.4', color: colors.mainText, marginLeft: '0' }}>
+                          {description}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 5. PROJECTS SECTION - Original ModernB format */}
-        {projects.length > 0 && (
-          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
-            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
-              Projects
-            </h2>
-            <div style={{ marginTop: '4px' }}>
-              {projects.map((project) => {
-                const bullets = parseBullets(project.description || '')
-                const techStack = project.technologies?.length > 0 ? project.technologies.join(', ') : ''
-                
-                return (
-                  <div key={project.id} style={{ marginBottom: '6px' }}>
-                    <div style={{ marginBottom: '2px' }}>
-                      <span style={{ fontSize: '10px', fontWeight: '600', color: '#000000' }}>
+          {/* Education Section */}
+          {education.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#FFD700', display: 'flex', alignItems: 'center', justifyContent: 'center', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact', colorAdjust: 'exact' }}>
+                  <GraduationCap size={12} color={colors.mainText} />
+                </div>
+                <h2 style={{ fontSize: '13px', fontWeight: 'bold', color: colors.mainText }}>Education</h2>
+              </div>
+              <div style={{ marginLeft: '28px' }}>
+                {education.map((edu) => {
+                  const dateRange = formatDateRange(edu.startDate, edu.endDate)
+                  return (
+                    <div key={edu.id} style={{ marginBottom: '8px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: '600', color: colors.mainText, marginBottom: '2px' }}>
+                        {edu.degree || 'Degree'}
+                      </div>
+                      <div style={{ fontSize: '10px', color: colors.mainText, marginBottom: '2px' }}>
+                        {edu.institution || 'Institution'} {edu.location && `| ${edu.location}`}
+                      </div>
+                      {dateRange && (
+                        <div style={{ fontSize: '9px', color: '#666666' }}>
+                          Graduated: {edu.endDate || dateRange}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Projects/Portfolio Section */}
+          {projects.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#FFD700', display: 'flex', alignItems: 'center', justifyContent: 'center', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact', colorAdjust: 'exact' }}>
+                  <FileText size={12} color={colors.mainText} />
+                </div>
+                <h2 style={{ fontSize: '13px', fontWeight: 'bold', color: colors.mainText }}>Portfolio</h2>
+              </div>
+              <div style={{ marginLeft: '28px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {projects.map((project) => {
+                  const description = getFirstSentence(project.description || '')
+                  return (
+                    <div key={project.id}>
+                      <div style={{ fontSize: '11px', fontWeight: '600', color: colors.mainText, marginBottom: '4px' }}>
                         {project.name || 'Project Name'}
-                        {techStack && ` — ${techStack}`}
-                      </span>
+                        {project.technologies && project.technologies.length > 0 && (
+                          <span style={{ fontSize: '10px', fontWeight: '400', color: '#666666' }}>
+                            {' '}for {project.technologies.slice(0, 2).join(', ')}
+                          </span>
+                        )}
+                      </div>
+                      {description && (
+                        <div style={{ fontSize: '10px', lineHeight: '1.4', color: colors.mainText }}>
+                          {description}
+                        </div>
+                      )}
                     </div>
-                    {bullets.length > 0 && (
-                      <div style={{ marginLeft: '8px', marginTop: '2px', fontSize: '10px', lineHeight: '1.15' }}>
-                        {bullets.slice(0, 3).map((bullet, idx) => (
-                          <div key={idx} style={{ marginBottom: '2px', color: '#000000' }}>
-                            • {bullet}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {(project.url || project.github) && (
-                      <div style={{ fontSize: '10px', color: '#000000', marginTop: '2px' }}>
-                        {project.url && <span>GitHub: {project.url} </span>}
-                        {project.github && <span>Demo: {project.github}</span>}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 6. EDUCATION */}
-        {education.length > 0 && (
-          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
-            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
-              Education
-            </h2>
-            <div style={{ marginTop: '4px' }}>
-              {education.map((edu) => {
-                const dateRange = formatDateRange(edu.startDate, edu.endDate)
-                
-                return (
-                  <div key={edu.id} style={{ marginBottom: '4px' }}>
-                    <div style={{ fontSize: '10px', fontWeight: '600', color: '#000000', marginBottom: '2px' }}>
-                      {edu.degree || 'Degree'} — {edu.institution || 'Institution'}
+          {/* Achievements Section */}
+          {achievements.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#FFD700', display: 'flex', alignItems: 'center', justifyContent: 'center', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact', colorAdjust: 'exact' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: colors.mainText }} />
+                </div>
+                <h2 style={{ fontSize: '13px', fontWeight: 'bold', color: colors.mainText }}>Achievements</h2>
+              </div>
+              <div style={{ marginLeft: '28px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {achievements.map((achievement) => (
+                  <div key={achievement.id}>
+                    <div style={{ fontSize: '11px', fontWeight: '600', color: colors.mainText, marginBottom: '2px' }}>
+                      {achievement.title || 'Achievement'}
                     </div>
-                    {dateRange && (
-                      <div style={{ fontSize: '10px', color: '#000000', marginBottom: '2px' }}>
-                        {dateRange}
-                      </div>
-                    )}
-                    {edu.gpa && (
-                      <div style={{ fontSize: '10px', color: '#000000' }}>
-                        GPA: {edu.gpa}
+                    {achievement.description && (
+                      <div style={{ fontSize: '10px', lineHeight: '1.4', color: colors.mainText }}>
+                        {achievement.description}
                       </div>
                     )}
                   </div>
-                )
-              })}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 7. CERTIFICATIONS */}
-        {extras.certifications.length > 0 && (
-          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
-            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
-              Certifications
-            </h2>
-            <div style={{ marginTop: '4px', fontSize: '10px', lineHeight: '1.15' }}>
-              {extras.certifications.map((cert, idx) => (
-                <div key={idx} style={{ marginBottom: '2px', color: '#000000' }}>
-                  • {cert}
+          {/* Certifications Section */}
+          {extras.certifications.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#FFD700', display: 'flex', alignItems: 'center', justifyContent: 'center', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact', colorAdjust: 'exact' }}>
+                  <div style={{ width: '10px', height: '10px', border: `2px solid ${colors.mainText}`, borderRadius: '2px' }} />
                 </div>
-              ))}
+                <h2 style={{ fontSize: '13px', fontWeight: 'bold', color: colors.mainText }}>Certifications</h2>
+              </div>
+              <div style={{ marginLeft: '28px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {extras.certifications.map((cert, idx) => (
+                  <div key={idx} style={{ fontSize: '10px', color: colors.mainText }}>{cert}</div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 8. ACHIEVEMENTS / AWARDS */}
-        {achievements.length > 0 && (
-          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
-            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
-              Achievements
-            </h2>
-            <div style={{ marginTop: '4px' }}>
-              {achievements.map((achievement) => (
-                <div key={achievement.id} style={{ marginBottom: '4px' }}>
-                  <div style={{ fontSize: '10px', fontWeight: '600', color: '#000000' }}>
-                    {achievement.title || 'Achievement'}
-                  </div>
-                  {achievement.description && (
-                    <div style={{ fontSize: '10px', color: '#000000', marginTop: '2px', marginLeft: '8px' }}>
-                      • {achievement.description}
-                    </div>
-                  )}
-                  {achievement.date && (
-                    <div style={{ fontSize: '10px', color: '#000000', marginTop: '1px' }}>
-                      {achievement.date}
-                    </div>
-                  )}
+          {/* Languages Section */}
+          {extras.languages.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#FFD700', display: 'flex', alignItems: 'center', justifyContent: 'center', printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact', colorAdjust: 'exact' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 'bold', color: colors.mainText }}>L</div>
                 </div>
-              ))}
+                <h2 style={{ fontSize: '13px', fontWeight: 'bold', color: colors.mainText }}>Languages</h2>
+              </div>
+              <div style={{ marginLeft: '28px', fontSize: '10px', color: colors.mainText }}>
+                {extras.languages.join(', ')}
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* 9. EXTRAS (Languages, Publications, Volunteering, Interests) */}
-        {(extras.languages.length > 0 || extras.interests.length > 0) && (
-          <div style={{ marginBottom: '0px', paddingBottom: '0px' }}>
-            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
-              Additional Information
-            </h2>
-            <div style={{ marginTop: '4px', fontSize: '10px', lineHeight: '1.15' }}>
-              {extras.languages.length > 0 && (
-                <div style={{ marginBottom: '3px' }}>
-                  <span style={{ fontWeight: '600', color: '#000000' }}>Languages:</span>{' '}
-                  <span style={{ color: '#000000' }}>{extras.languages.join(', ')}</span>
-                </div>
-              )}
-              {extras.interests.length > 0 && (
-                <div style={{ marginBottom: '3px' }}>
-                  <span style={{ fontWeight: '600', color: '#000000' }}>Interests:</span>{' '}
-                  <span style={{ color: '#000000' }}>{extras.interests.join(', ')}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </TemplateFrame>
   )

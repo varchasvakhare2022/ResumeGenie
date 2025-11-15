@@ -96,20 +96,20 @@ export default function Builder() {
         }}
       >
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <h1 className="text-2xl font-bold text-gray-900">Resume Builder</h1>
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between py-2">
+            <h1 className="text-xl font-bold text-gray-900">Resume Builder</h1>
+            <div className="flex items-center gap-2">
               <button
                 onClick={loadDemoResume}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <Download size={18} />
+                <Download size={16} />
                 Load Demo
               </button>
               <ExportButton contentRef={previewRef} />
             </div>
           </div>
-          <div className="pb-4">
+          <div className="pb-2">
             <TemplatePicker
               selectedTemplate={selectedTemplate}
               onTemplateChange={setSelectedTemplate}
@@ -120,20 +120,22 @@ export default function Builder() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left: Form - Takes 5 columns */}
-          <div className="lg:col-span-5 space-y-6">
-            {/* Stepper */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <Stepper
-                steps={STEPS}
-                currentStep={currentStep}
-                onStepClick={handleStepClick}
-              />
-            </div>
+        {/* Stepper - Spans full width, positioned above grid */}
+        <div className="mb-6 lg:mb-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <Stepper
+              steps={STEPS}
+              currentStep={currentStep}
+              onStepClick={handleStepClick}
+            />
+          </div>
+        </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:items-stretch">
+          {/* Left: Form - Takes 5 columns */}
+          <div className="lg:col-span-5 flex flex-col">
             {/* Form Content */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex-1 flex flex-col justify-between">
               <StepHeader
                 title={STEPS[currentStep]}
                 step={currentStep + 1}
@@ -171,15 +173,15 @@ export default function Builder() {
 
           {/* Right: Preview - Takes 7 columns */}
           <div className="lg:col-span-7 flex flex-col">
-            {/* Preview - Fixed height container */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-[calc(100vh-220px)] min-h-[600px] max-h-[800px]">
+            {/* Preview - Fixed height container - Aligned with form content */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full min-h-[700px]">
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
                 <h2 className="text-lg font-semibold text-gray-900">Live Preview</h2>
               </div>
               <div className="flex-1 overflow-hidden min-h-0">
                 <div className="h-full overflow-y-auto bg-gray-50 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                   <div className="p-4 md:p-6">
-                    <div className="bg-white shadow-lg rounded-lg w-full">
+                    <div className="bg-white shadow-lg rounded-lg w-full" key={selectedTemplate}>
                       {renderPreview()}
                     </div>
                   </div>
