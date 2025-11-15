@@ -5,6 +5,7 @@ import Builder from './pages/Builder'
 import ATSChecker from './pages/ATSChecker'
 import CoverLetter from './pages/CoverLetter'
 import InterviewQuestions from './pages/InterviewQuestions'
+import ResumeRoaster from './pages/ResumeRoaster'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/ats-checker" element={<ATSChecker />} />
         <Route path="/cover-letter" element={<CoverLetter />} />
         <Route path="/interview-questions" element={<InterviewQuestions />} />
+        <Route path="/resume-roaster" element={<ResumeRoaster />} />
       </Routes>
     </div>
   )

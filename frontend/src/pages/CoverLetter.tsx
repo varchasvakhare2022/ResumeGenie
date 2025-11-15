@@ -1,12 +1,19 @@
 import { Mail, Sparkles, FileText, Zap } from 'lucide-react'
+import { useTheme } from '../contexts/ThemeContext'
 
 export default function CoverLetter() {
+  const { themeConfig } = useTheme()
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+        {/* Header - Theme-aware */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl mb-4">
+          <div 
+            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg transition-all duration-300"
+            style={{
+              background: `linear-gradient(135deg, ${themeConfig.colors.primary}, ${themeConfig.colors.secondary})`
+            }}
+          >
             <Mail className="text-white" size={32} />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">

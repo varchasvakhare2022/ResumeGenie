@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
-import { FileText, CheckCircle2, Mail, MessageSquare, Sparkles, ArrowRight, Zap, Shield, Target, Brain } from 'lucide-react'
+import { FileText, CheckCircle2, Mail, MessageSquare, Sparkles, ArrowRight, Zap, Shield, Target, Brain, Laugh } from 'lucide-react'
+import { useTheme } from '../contexts/ThemeContext'
 
 export default function Home() {
+  const { themeConfig } = useTheme()
   const features = [
     {
       id: 'builder',
@@ -39,12 +41,26 @@ export default function Home() {
       gradient: 'from-orange-500 to-red-500',
       features: ['Role-Specific Questions', 'Behavioral Questions', 'Technical Questions', 'Answer Suggestions'],
     },
+    {
+      id: 'roaster',
+      title: 'Resume Roaster',
+      description: 'Upload your resume and get brutally honest (but helpful) AI feedback wrapped in humor. Learn while you laugh!',
+      icon: Laugh,
+      path: '/resume-roaster',
+      gradient: 'from-orange-600 to-red-600',
+      features: ['Funny Feedback', 'AI-Powered Analysis', 'Real Insights', 'Actionable Tips'],
+    },
   ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-accent text-white py-20 md:py-32">
+      {/* Hero Section - Theme-aware */}
+      <section 
+        className="relative overflow-hidden text-white py-20 md:py-32 transition-all duration-500"
+        style={{
+          background: `linear-gradient(to right, ${themeConfig.colors.primary}, ${themeConfig.colors.secondary}, ${themeConfig.colors.accent})`
+        }}
+      >
         <div 
           className="absolute inset-0 opacity-20"
           style={{

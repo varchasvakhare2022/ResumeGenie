@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { X, Download, Printer, FileText } from 'lucide-react'
+import { X, FileText } from 'lucide-react'
 import { useResumeStore } from '../store/useResumeStore'
-import { exportToPrint, exportToPDF, type ExportOptions } from '../hooks/useExport'
+import { exportToPDF, type ExportOptions } from '../hooks/useExport'
 
 interface ExportDialogProps {
   isOpen: boolean
@@ -9,16 +9,10 @@ interface ExportDialogProps {
   contentRef: React.RefObject<HTMLDivElement>
 }
 
-type PaperSize = 'A4' | 'Letter'
-type MarginSize = 'small' | 'medium' | 'large'
-
 export default function ExportDialog({ isOpen, onClose, contentRef }: ExportDialogProps) {
   const { resume } = useResumeStore()
-  const [paperSize, setPaperSize] = useState<PaperSize>('A4')
-  const [marginSize, setMarginSize] = useState<MarginSize>('medium')
   const [includeLinks, setIncludeLinks] = useState(true)
   const [exporting, setExporting] = useState(false)
-  const [exportMethod, setExportMethod] = useState<'print' | 'pdf'>('print')
 
   if (!isOpen) return null
 
@@ -44,19 +38,15 @@ export default function ExportDialog({ isOpen, onClose, contentRef }: ExportDial
     setExporting(true)
     try {
       const options: ExportOptions = {
-        paperSize,
-        marginSize,
+        paperSize: 'A4', // Fixed A4
+        marginSize: 'resume', // Fixed resume margins (0.75" top/bottom, 0.6" left/right)
         includeLinks,
       }
 
-      if (exportMethod === 'print') {
-        await exportToPrint(contentRef.current, options)
-      } else {
-        await exportToPDF(contentRef.current, {
-          ...options,
-          filename,
-        })
-      }
+      await exportToPDF(contentRef.current, {
+        ...options,
+        filename,
+      })
       onClose()
     } catch (error) {
       console.error('Export failed:', error)
@@ -72,8 +62,8 @@ export default function ExportDialog({ isOpen, onClose, contentRef }: ExportDial
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-2">
-            <Download className="text-brand-primary" size={24} />
-            <h2 className="text-xl font-bold text-gray-900">Export Resume</h2>
+            <FileText className="text-brand-primary" size={24} />
+            <h2 className="text-xl font-bold text-gray-900">Export as PDF</h2>
           </div>
           <button
             onClick={onClose}
@@ -86,72 +76,14 @@ export default function ExportDialog({ isOpen, onClose, contentRef }: ExportDial
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Export Method */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Export Method
-            </label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="exportMethod"
-                  value="print"
-                  checked={exportMethod === 'print'}
-                  onChange={(e) => setExportMethod(e.target.value as 'print')}
-                  className="text-brand-primary"
-                  disabled={exporting}
-                />
-                <Printer size={18} />
-                <span className="text-sm">Print (Primary)</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="exportMethod"
-                  value="pdf"
-                  checked={exportMethod === 'pdf'}
-                  onChange={(e) => setExportMethod(e.target.value as 'pdf')}
-                  className="text-brand-primary"
-                  disabled={exporting}
-                />
-                <FileText size={18} />
-                <span className="text-sm">PDF (Fallback)</span>
-              </label>
+          {/* Export Settings Info */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-blue-900 mb-2">PDF Settings</h3>
+            <div className="text-xs text-blue-700 space-y-1">
+              <div><strong>Paper Size:</strong> A4 (210 × 297 mm)</div>
+              <div><strong>Margins:</strong> 0.75" top/bottom, 0.6" left/right</div>
+              <div className="text-blue-600 mt-2">Optimized for ATS-friendly resume format</div>
             </div>
-          </div>
-
-          {/* Paper Size */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Paper Size
-            </label>
-            <select
-              value={paperSize}
-              onChange={(e) => setPaperSize(e.target.value as PaperSize)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
-              disabled={exporting}
-            >
-              <option value="A4">A4 (210 × 297 mm)</option>
-              <option value="Letter">Letter (8.5 × 11 in)</option>
-            </select>
-          </div>
-
-          {/* Margin Size */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Margins
-            </label>
-            <select
-              value={marginSize}
-              onChange={(e) => setMarginSize(e.target.value as MarginSize)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
-              disabled={exporting}
-            >
-              <option value="small">Small (0.5 in)</option>
-              <option value="medium">Medium (1 in)</option>
-              <option value="large">Large (1.5 in)</option>
-            </select>
           </div>
 
           {/* Include Links */}
@@ -169,20 +101,18 @@ export default function ExportDialog({ isOpen, onClose, contentRef }: ExportDial
             </label>
           </div>
 
-          {/* Filename (for PDF) */}
-          {exportMethod === 'pdf' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Filename
-              </label>
-              <input
-                type="text"
-                value={filename}
-                readOnly
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm"
-              />
-            </div>
-          )}
+          {/* Filename */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Filename
+            </label>
+            <input
+              type="text"
+              value={filename}
+              readOnly
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm"
+            />
+          </div>
         </div>
 
         {/* Footer */}
@@ -202,12 +132,12 @@ export default function ExportDialog({ isOpen, onClose, contentRef }: ExportDial
             {exporting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Exporting...
+                Exporting PDF...
               </>
             ) : (
               <>
-                <Download size={18} />
-                Export
+                <FileText size={18} />
+                Export as PDF
               </>
             )}
           </button>

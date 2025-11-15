@@ -1,15 +1,14 @@
-import { toPng, toJpeg } from 'html-to-image'
-import jsPDF from 'jspdf'
+import html2pdf from 'html2pdf.js'
 
 export interface ExportOptions {
   paperSize: 'A4' | 'Letter'
-  marginSize: 'small' | 'medium' | 'large'
+  marginSize: 'small' | 'medium' | 'large' | 'resume' // 'resume' = fixed resume margins
   includeLinks: boolean
   filename?: string
 }
 
 const PAPER_SIZES = {
-  A4: { width: 210, height: 297 }, // mm
+  A4: { width: 210, height: 297 }, // mm (8.27 × 11.69 in)
   Letter: { width: 215.9, height: 279.4 }, // mm
 }
 
@@ -17,6 +16,14 @@ const MARGIN_SIZES = {
   small: 12.7, // 0.5 inch in mm
   medium: 25.4, // 1 inch in mm
   large: 38.1, // 1.5 inch in mm
+}
+
+// Fixed resume margins: 0.75" top/bottom (19mm), 0.6" left/right (15.24mm)
+const RESUME_MARGINS = {
+  top: 19.05, // 0.75 inch in mm
+  bottom: 19.05, // 0.75 inch in mm
+  left: 15.24, // 0.6 inch in mm
+  right: 15.24, // 0.6 inch in mm
 }
 
 export async function exportToPrint(
@@ -55,12 +62,16 @@ export async function exportToPrint(
       const noPrintElements = clonedContent.querySelectorAll('.no-print, button, .export-button, .ai-assist-button')
       noPrintElements.forEach((el) => el.remove())
 
-      // Apply print styles
+      // Apply print styles with fixed resume margins if specified
+      const marginValue = options.marginSize === 'resume'
+        ? `${RESUME_MARGINS.top}mm ${RESUME_MARGINS.right}mm ${RESUME_MARGINS.bottom}mm ${RESUME_MARGINS.left}mm`
+        : `${MARGIN_SIZES[options.marginSize]}mm`
+      
       const printStyles = `
         <style>
           @page {
-            size: ${options.paperSize};
-            margin: ${MARGIN_SIZES[options.marginSize]}mm;
+            size: A4;
+            margin: ${marginValue};
           }
           @media print {
             * {
@@ -156,109 +167,139 @@ export async function exportToPDF(
   options: ExportOptions
 ): Promise<void> {
   try {
-    // Get paper dimensions
-    const paperWidth = PAPER_SIZES[options.paperSize].width
-    const paperHeight = PAPER_SIZES[options.paperSize].height
-    const margin = MARGIN_SIZES[options.marginSize]
-    const contentWidth = paperWidth - margin * 2
-    const contentHeight = paperHeight - margin * 2
+    // Wait for fonts to load
+    await document.fonts.ready
+    await new Promise(resolve => setTimeout(resolve, 200))
 
-    // Clone content for export
-    const clonedContent = content.cloneNode(true) as HTMLDivElement
+    // Verify content is visible and has dimensions
+    const originalRect = content.getBoundingClientRect()
+    const originalWidth = originalRect.width || content.scrollWidth || content.offsetWidth
+    const originalHeight = originalRect.height || content.scrollHeight || content.offsetHeight
 
-    // Remove non-printable elements
-    const noPrintElements = clonedContent.querySelectorAll('.no-print, button, .export-button, .ai-assist-button')
-    noPrintElements.forEach((el) => el.remove())
+    if (originalWidth === 0 || originalHeight === 0) {
+      throw new Error(`Content has zero dimensions (${originalWidth}x${originalHeight}). Please ensure the preview is visible.`)
+    }
 
-    // Hide links if not included
-    if (!options.includeLinks) {
-      const links = clonedContent.querySelectorAll('a')
-      links.forEach((link) => {
-        link.style.color = 'inherit'
-        link.style.textDecoration = 'none'
+    // Store original styles to restore later
+    const originalStyles = {
+      display: content.style.display,
+      visibility: content.style.visibility,
+      position: content.style.position,
+      overflow: content.style.overflow,
+      transform: content.style.transform,
+    }
+
+    // Ensure content is visible and properly positioned for capture
+    content.style.display = 'block'
+    content.style.visibility = 'visible'
+    content.style.position = 'relative'
+    content.style.overflow = 'visible'
+    content.style.transform = 'none'
+
+    // Hide non-printable elements temporarily
+    const noPrintElements = content.querySelectorAll('.no-print, button, .export-button, .ai-assist-button')
+    const hiddenElements: { el: HTMLElement; display: string }[] = []
+    noPrintElements.forEach((el) => {
+      const htmlEl = el as HTMLElement
+      hiddenElements.push({ el: htmlEl, display: htmlEl.style.display })
+      htmlEl.style.display = 'none'
+    })
+
+    // Handle links styling
+    const links = content.querySelectorAll('a')
+    const linkStyles: { el: HTMLElement; originalColor: string; originalDecoration: string }[] = []
+    links.forEach((link) => {
+      const htmlLink = link as HTMLElement
+      linkStyles.push({
+        el: htmlLink,
+        originalColor: htmlLink.style.color,
+        originalDecoration: htmlLink.style.textDecoration
       })
-    }
+      
+      if (!options.includeLinks) {
+        htmlLink.style.color = 'inherit'
+        htmlLink.style.textDecoration = 'none'
+      } else {
+        htmlLink.style.color = '#0000EE'
+        htmlLink.style.textDecoration = 'underline'
+      }
+    })
 
-    // Configure html-to-image options
-    const imageOptions = {
-      backgroundColor: '#ffffff',
-      width: content.offsetWidth,
-      height: content.offsetHeight,
-      style: {
-        transform: 'scale(1)',
-        transformOrigin: 'top left',
+    // Get margins
+    const marginTopMm = RESUME_MARGINS.top
+    const marginBottomMm = RESUME_MARGINS.bottom
+    const marginLeftMm = RESUME_MARGINS.left
+    const marginRightMm = RESUME_MARGINS.right
+
+    // Scroll to top to ensure content is in view
+    content.scrollIntoView({ behavior: 'instant', block: 'start' })
+    
+    // Wait for scroll and rendering
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    // Configure html2pdf with simpler, more reliable options
+    const opt = {
+      margin: [marginTopMm, marginRightMm, marginBottomMm, marginLeftMm],
+      filename: options.filename || 'resume.pdf',
+      image: { 
+        type: 'png', 
+        quality: 1.0 
       },
-      pixelRatio: 2, // Higher quality
-      quality: 1.0,
-      useCORS: true,
-      allowTaint: true,
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        letterRendering: true,
+        logging: true, // Enable logging to debug
+        backgroundColor: '#ffffff',
+        width: originalWidth,
+        height: originalHeight,
+        windowWidth: originalWidth,
+        windowHeight: originalHeight,
+        scrollX: 0,
+        scrollY: 0,
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait',
+      },
+      pagebreak: { 
+        mode: ['avoid-all', 'css', 'legacy'],
+      },
     }
 
-    // Convert to image (try PNG first, fallback to JPEG)
-    let dataUrl: string
+    // Wait for final rendering
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Generate PDF with error handling
     try {
-      dataUrl = await toPng(clonedContent, imageOptions)
-    } catch (error) {
-      console.warn('PNG conversion failed, trying JPEG:', error)
-      try {
-        dataUrl = await toJpeg(clonedContent, imageOptions)
-      } catch (jpegError) {
-        throw new Error(`Image conversion failed: ${jpegError instanceof Error ? jpegError.message : 'Unknown error'}`)
-      }
+      await html2pdf().set(opt).from(content).save()
+      console.log('PDF generated successfully')
+    } catch (pdfError) {
+      console.error('PDF generation error:', pdfError)
+      throw pdfError
     }
 
-    // Create PDF
-    const pdf = new jsPDF({
-      orientation: paperHeight > paperWidth ? 'portrait' : 'landscape',
-      unit: 'mm',
-      format: [paperWidth, paperHeight],
+    // Restore original styles
+    content.style.display = originalStyles.display
+    content.style.visibility = originalStyles.visibility
+    content.style.position = originalStyles.position
+    content.style.overflow = originalStyles.overflow
+    content.style.transform = originalStyles.transform
+
+    // Restore hidden elements
+    hiddenElements.forEach(({ el, display }) => {
+      el.style.display = display
     })
 
-    // Calculate image dimensions to fit page
-    const img = new Image()
-    img.src = dataUrl
-
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => {
-        try {
-          const imgWidth = img.width
-          const imgHeight = img.height
-          const imgAspectRatio = imgWidth / imgHeight
-          const contentAspectRatio = contentWidth / contentHeight
-
-          let finalWidth: number
-          let finalHeight: number
-
-          if (imgAspectRatio > contentAspectRatio) {
-            // Image is wider, fit to width
-            finalWidth = contentWidth
-            finalHeight = contentWidth / imgAspectRatio
-          } else {
-            // Image is taller, fit to height
-            finalHeight = contentHeight
-            finalWidth = contentHeight * imgAspectRatio
-          }
-
-          // Center image on page if smaller than content area
-          const x = margin + (contentWidth - finalWidth) / 2
-          const y = margin + (contentHeight - finalHeight) / 2
-
-          // Determine image format
-          const imageFormat = dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG'
-          
-          // Add image to PDF
-          pdf.addImage(dataUrl, imageFormat, x, y, finalWidth, finalHeight)
-
-          // Save PDF
-          pdf.save(options.filename || 'resume.pdf')
-          resolve()
-        } catch (error) {
-          reject(error)
-        }
-      }
-      img.onerror = () => reject(new Error('Failed to load image'))
+    // Restore link styles
+    linkStyles.forEach(({ el, originalColor, originalDecoration }) => {
+      el.style.color = originalColor
+      el.style.textDecoration = originalDecoration
     })
+
   } catch (error) {
+    console.error('PDF export failed:', error)
     throw new Error(`PDF export failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }

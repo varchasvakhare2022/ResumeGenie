@@ -17,7 +17,7 @@ export default function ExportButton({ className = '', contentRef }: ExportButto
         className={`flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-blue-600 transition-colors ${className}`}
       >
         <Download size={18} />
-        Export Resume
+        Export as PDF
       </button>
 
       <ExportDialog

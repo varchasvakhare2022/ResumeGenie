@@ -1,10 +1,10 @@
 import { useState, useRef } from 'react'
 import { useResumeStore } from '../store/useResumeStore'
+import { useTheme } from '../contexts/ThemeContext'
 import Stepper from '../components/Stepper'
 import StepHeader from '../components/StepHeader'
 import TemplatePicker, { type TemplateType } from '../components/TemplatePicker'
 import ExportButton from '../components/ExportButton'
-import ATSPanel from '../components/ATSPanel'
 import Personal from '../components/forms/Personal'
 import Summary from '../components/forms/Summary'
 import Experience from '../components/forms/Experience'
@@ -33,6 +33,7 @@ export default function Builder() {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('ClassicA')
   const previewRef = useRef<HTMLDivElement>(null)
   const { loadDemoResume } = useResumeStore()
+  const { themeConfig } = useTheme()
 
   const handleNext = () => {
     if (currentStep < STEPS.length - 1) {
@@ -86,8 +87,14 @@ export default function Builder() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Toolbar */}
-      <div className="bg-white border-b border-gray-200 sticky top-20 z-40 shadow-sm">
+      {/* Toolbar - Theme-aware */}
+      <div 
+        className="border-b sticky top-20 z-40 shadow-sm transition-all duration-300"
+        style={{
+          backgroundColor: themeConfig.colors.light,
+          borderColor: themeConfig.colors.primary + '30'
+        }}
+      >
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <h1 className="text-2xl font-bold text-gray-900">Resume Builder</h1>
@@ -162,8 +169,8 @@ export default function Builder() {
             </div>
           </div>
 
-          {/* Right: Preview & ATS - Takes 7 columns */}
-          <div className="lg:col-span-7 flex flex-col space-y-6">
+          {/* Right: Preview - Takes 7 columns */}
+          <div className="lg:col-span-7 flex flex-col">
             {/* Preview - Fixed height container */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-[calc(100vh-220px)] min-h-[600px] max-h-[800px]">
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
@@ -178,11 +185,6 @@ export default function Builder() {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* ATS Panel */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <ATSPanel />
             </div>
           </div>
         </div>

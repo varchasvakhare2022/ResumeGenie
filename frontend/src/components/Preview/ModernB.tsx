@@ -6,124 +6,238 @@ const ModernB = forwardRef<HTMLDivElement>((props, ref) => {
   const { resume } = useResumeStore()
   const { personal, summary, experience, education, skills, projects, achievements, extras } = resume
 
+  // Group skills by category
+  const skillsByCategory = skills.reduce((acc, skill) => {
+    const category = skill.category || 'Other'
+    if (!acc[category]) {
+      acc[category] = []
+    }
+    acc[category].push(skill.name)
+    return acc
+  }, {} as Record<string, string[]>)
+
+  // Format date range
+  const formatDateRange = (start?: string, end?: string, current?: boolean) => {
+    if (!start && !end) return ''
+    const startStr = start || ''
+    const endStr = current ? 'Present' : (end || '')
+    return startStr && endStr ? `${startStr} – ${endStr}` : startStr || endStr
+  }
+
+  // Parse description into bullet points
+  const parseBullets = (text: string) => {
+    if (!text) return []
+    return text
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(line => {
+        // Remove existing bullet markers
+        return line.replace(/^[•\-\*]\s*/, '')
+      })
+  }
+
   return (
-    <TemplateFrame ref={ref} className="w-full max-w-full bg-gradient-to-br from-blue-50 to-white">
-      <div className="space-y-8 resume-section">
-        {/* Header with colored background */}
-        <div className="bg-brand-primary text-white p-6 rounded-lg">
-          <h1 className="text-4xl font-bold mb-2">
-            {personal.firstName} {personal.lastName}
+    <TemplateFrame ref={ref} className="w-full max-w-full" style={{ fontFamily: 'Lato, Inter, Roboto, Calibri, Helvetica, sans-serif', userSelect: 'text', WebkitUserSelect: 'text' }}>
+      <div className="resume-section" style={{ lineHeight: '1.1', fontSize: '10px', color: '#000000', userSelect: 'text', WebkitUserSelect: 'text' }}>
+        {/* 1. HEADER / CONTACT INFORMATION - Same as ClassicA (centered, location on separate line) */}
+        <div style={{ marginBottom: '8px', borderBottom: '2px solid #000000', paddingBottom: '6px', textAlign: 'center' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '2px', color: '#000000' }}>
+            {personal.firstName || 'First'} {personal.lastName || 'Last'}
           </h1>
-          <div className="flex flex-wrap gap-4 text-blue-100">
-            {personal.email && <span>{personal.email}</span>}
+          {personal.location && (
+            <div style={{ fontSize: '10px', color: '#000000', marginBottom: '4px' }}>
+              {personal.location}
+            </div>
+          )}
+          <div style={{ fontSize: '10px', color: '#000000', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px', marginTop: '4px' }}>
             {personal.phone && <span>{personal.phone}</span>}
-            {personal.location && <span>{personal.location}</span>}
-            {personal.website && <span>{personal.website}</span>}
-            {personal.linkedin && <span>LinkedIn</span>}
-            {personal.github && <span>GitHub</span>}
+            {personal.email && <span>| {personal.email}</span>}
+            {personal.linkedin && <span>| LinkedIn: {personal.linkedin}</span>}
+            {personal.github && <span>| GitHub: {personal.github}</span>}
+            {personal.website && <span>| {personal.website}</span>}
           </div>
         </div>
 
-        {/* Summary */}
+        {/* 2. PROFESSIONAL SUMMARY / OBJECTIVE - Original ModernB format (paragraph, not bullets) */}
         {summary && (
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <h2 className="text-xl font-bold text-brand-primary mb-2">Professional Summary</h2>
-            <p className="text-gray-700">{summary}</p>
+          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
+            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
+              Professional Summary
+            </h2>
+            <p style={{ fontSize: '10px', lineHeight: '1.15', color: '#000000', marginTop: '4px' }}>
+              {summary}
+            </p>
           </div>
         )}
 
-        {/* Experience */}
+        {/* 3. SKILLS SECTION - BEFORE EXPERIENCE */}
+        {skills.length > 0 && (
+          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
+            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
+              Skills
+            </h2>
+            <div style={{ marginTop: '4px', fontSize: '10px', lineHeight: '1.15' }}>
+              {Object.entries(skillsByCategory).map(([category, skillList]) => (
+                <div key={category} style={{ marginBottom: '3px' }}>
+                  <span style={{ fontWeight: '600', color: '#000000' }}>{category}:</span>{' '}
+                  <span style={{ color: '#000000' }}>{skillList.join(', ')}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 4. EXPERIENCE / INTERNSHIPS / WORK - Original ModernB format (left-aligned, Position — Company) */}
         {experience.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold text-brand-dark mb-4">Work Experience</h2>
-            <div className="space-y-4">
-              {experience.map((exp) => (
-                <div key={exp.id} className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-brand-primary">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold text-lg">{exp.position}</h3>
-                      <p className="text-brand-primary">{exp.company}</p>
+          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
+            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
+              Experience
+            </h2>
+            <div style={{ marginTop: '4px' }}>
+              {experience.map((exp) => {
+                const bullets = parseBullets(exp.description || '')
+                const dateRange = formatDateRange(exp.startDate, exp.endDate, exp.current)
+                const locationDate = [exp.location, dateRange].filter(Boolean).join(' | ')
+                
+                return (
+                  <div key={exp.id} style={{ marginBottom: '6px' }}>
+                    <div style={{ marginBottom: '2px' }}>
+                      <span style={{ fontSize: '10px', fontWeight: '600', color: '#000000' }}>
+                        {exp.position || 'Position'} — {exp.company || 'Company'}
+                      </span>
                     </div>
-                    <div className="text-sm text-gray-600">
-                      {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
-                    </div>
+                    {locationDate && (
+                      <div style={{ fontSize: '10px', color: '#000000', marginBottom: '3px' }}>
+                        {locationDate}
+                      </div>
+                    )}
+                    {bullets.length > 0 && (
+                      <div style={{ marginLeft: '8px', fontSize: '10px', lineHeight: '1.15' }}>
+                        {bullets.slice(0, 5).map((bullet, idx) => (
+                          <div key={idx} style={{ marginBottom: '2px', color: '#000000' }}>
+                            • {bullet}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {exp.description && (
-                    <p className="text-gray-700 text-sm">{exp.description}</p>
-                  )}
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
 
-        {/* Education and Skills in two columns */}
-        <div className="grid grid-cols-2 gap-6">
-          {education.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-bold text-brand-dark mb-4">Education</h2>
-              <div className="space-y-3">
-                {education.map((edu) => (
-                  <div key={edu.id} className="bg-white p-3 rounded-lg shadow-sm">
-                    <h3 className="font-semibold">{edu.degree}</h3>
-                    <p className="text-sm text-gray-600">{edu.institution}</p>
-                    {edu.gpa && <p className="text-sm text-gray-500">GPA: {edu.gpa}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {skills.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-bold text-brand-dark mb-4">Skills</h2>
-              <div className="flex flex-wrap gap-2">
-                {skills.map((skill) => (
-                  <span key={skill.id} className="bg-brand-primary text-white px-3 py-1 rounded-full text-sm">
-                    {skill.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Projects */}
+        {/* 5. PROJECTS SECTION - Original ModernB format */}
         {projects.length > 0 && (
-          <div className="resume-section">
-            <h2 className="text-2xl font-bold text-brand-dark mb-4">Projects</h2>
-            <div className="space-y-3">
-              {projects.map((project) => (
-                <div key={project.id} className="bg-white p-4 rounded-lg shadow-sm">
-                  <h3 className="font-semibold text-lg">{project.name}</h3>
-                  {project.description && (
-                    <p className="text-gray-700 text-sm mt-1">{project.description}</p>
-                  )}
-                  {(project.url || project.github) && (
-                    <div className="text-xs text-gray-500 mt-2">
-                      {project.url && <a href={project.url} className="text-brand-primary hover:underline mr-3">{project.url}</a>}
-                      {project.github && <a href={project.github} className="text-brand-primary hover:underline">{project.github}</a>}
+          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
+            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
+              Projects
+            </h2>
+            <div style={{ marginTop: '4px' }}>
+              {projects.map((project) => {
+                const bullets = parseBullets(project.description || '')
+                const techStack = project.technologies?.length > 0 ? project.technologies.join(', ') : ''
+                
+                return (
+                  <div key={project.id} style={{ marginBottom: '6px' }}>
+                    <div style={{ marginBottom: '2px' }}>
+                      <span style={{ fontSize: '10px', fontWeight: '600', color: '#000000' }}>
+                        {project.name || 'Project Name'}
+                        {techStack && ` — ${techStack}`}
+                      </span>
                     </div>
-                  )}
+                    {bullets.length > 0 && (
+                      <div style={{ marginLeft: '8px', marginTop: '2px', fontSize: '10px', lineHeight: '1.15' }}>
+                        {bullets.slice(0, 3).map((bullet, idx) => (
+                          <div key={idx} style={{ marginBottom: '2px', color: '#000000' }}>
+                            • {bullet}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {(project.url || project.github) && (
+                      <div style={{ fontSize: '10px', color: '#000000', marginTop: '2px' }}>
+                        {project.url && <span>GitHub: {project.url} </span>}
+                        {project.github && <span>Demo: {project.github}</span>}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 6. EDUCATION */}
+        {education.length > 0 && (
+          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
+            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
+              Education
+            </h2>
+            <div style={{ marginTop: '4px' }}>
+              {education.map((edu) => {
+                const dateRange = formatDateRange(edu.startDate, edu.endDate)
+                
+                return (
+                  <div key={edu.id} style={{ marginBottom: '4px' }}>
+                    <div style={{ fontSize: '10px', fontWeight: '600', color: '#000000', marginBottom: '2px' }}>
+                      {edu.degree || 'Degree'} — {edu.institution || 'Institution'}
+                    </div>
+                    {dateRange && (
+                      <div style={{ fontSize: '10px', color: '#000000', marginBottom: '2px' }}>
+                        {dateRange}
+                      </div>
+                    )}
+                    {edu.gpa && (
+                      <div style={{ fontSize: '10px', color: '#000000' }}>
+                        GPA: {edu.gpa}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 7. CERTIFICATIONS */}
+        {extras.certifications.length > 0 && (
+          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
+            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
+              Certifications
+            </h2>
+            <div style={{ marginTop: '4px', fontSize: '10px', lineHeight: '1.15' }}>
+              {extras.certifications.map((cert, idx) => (
+                <div key={idx} style={{ marginBottom: '2px', color: '#000000' }}>
+                  • {cert}
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Achievements */}
+        {/* 8. ACHIEVEMENTS / AWARDS */}
         {achievements.length > 0 && (
-          <div className="resume-section">
-            <h2 className="text-2xl font-bold text-brand-dark mb-4">Achievements</h2>
-            <div className="space-y-3">
+          <div style={{ marginBottom: '8px', paddingBottom: '6px' }}>
+            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
+              Achievements
+            </h2>
+            <div style={{ marginTop: '4px' }}>
               {achievements.map((achievement) => (
-                <div key={achievement.id} className="bg-white p-4 rounded-lg shadow-sm">
-                  <h3 className="font-semibold text-lg">{achievement.title}</h3>
+                <div key={achievement.id} style={{ marginBottom: '4px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: '600', color: '#000000' }}>
+                    {achievement.title || 'Achievement'}
+                  </div>
                   {achievement.description && (
-                    <p className="text-gray-700 text-sm mt-1">{achievement.description}</p>
+                    <div style={{ fontSize: '10px', color: '#000000', marginTop: '2px', marginLeft: '8px' }}>
+                      • {achievement.description}
+                    </div>
                   )}
                   {achievement.date && (
-                    <p className="text-xs text-gray-500 mt-1">{achievement.date}</p>
+                    <div style={{ fontSize: '10px', color: '#000000', marginTop: '1px' }}>
+                      {achievement.date}
+                    </div>
                   )}
                 </div>
               ))}
@@ -131,45 +245,23 @@ const ModernB = forwardRef<HTMLDivElement>((props, ref) => {
           </div>
         )}
 
-        {/* Extras */}
-        {(extras.languages.length > 0 || extras.certifications.length > 0 || extras.interests.length > 0) && (
-          <div className="resume-section">
-            <h2 className="text-2xl font-bold text-brand-dark mb-4">Additional Information</h2>
-            <div className="grid grid-cols-3 gap-4">
+        {/* 9. EXTRAS (Languages, Publications, Volunteering, Interests) */}
+        {(extras.languages.length > 0 || extras.interests.length > 0) && (
+          <div style={{ marginBottom: '0px', paddingBottom: '0px' }}>
+            <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', color: '#000000', borderBottom: '1px solid #000000', paddingBottom: '2px' }}>
+              Additional Information
+            </h2>
+            <div style={{ marginTop: '4px', fontSize: '10px', lineHeight: '1.15' }}>
               {extras.languages.length > 0 && (
-                <div className="bg-white p-4 rounded-lg shadow-sm">
-                  <h3 className="font-semibold text-sm mb-2">Languages</h3>
-                  <div className="flex flex-wrap gap-1">
-                    {extras.languages.map((lang, index) => (
-                      <span key={index} className="text-xs bg-brand-primary text-white px-2 py-1 rounded-full">
-                        {lang}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {extras.certifications.length > 0 && (
-                <div className="bg-white p-4 rounded-lg shadow-sm">
-                  <h3 className="font-semibold text-sm mb-2">Certifications</h3>
-                  <div className="flex flex-wrap gap-1">
-                    {extras.certifications.map((cert, index) => (
-                      <span key={index} className="text-xs bg-brand-primary text-white px-2 py-1 rounded-full">
-                        {cert}
-                      </span>
-                    ))}
-                  </div>
+                <div style={{ marginBottom: '3px' }}>
+                  <span style={{ fontWeight: '600', color: '#000000' }}>Languages:</span>{' '}
+                  <span style={{ color: '#000000' }}>{extras.languages.join(', ')}</span>
                 </div>
               )}
               {extras.interests.length > 0 && (
-                <div className="bg-white p-4 rounded-lg shadow-sm">
-                  <h3 className="font-semibold text-sm mb-2">Interests</h3>
-                  <div className="flex flex-wrap gap-1">
-                    {extras.interests.map((interest, index) => (
-                      <span key={index} className="text-xs bg-brand-primary text-white px-2 py-1 rounded-full">
-                        {interest}
-                      </span>
-                    ))}
-                  </div>
+                <div style={{ marginBottom: '3px' }}>
+                  <span style={{ fontWeight: '600', color: '#000000' }}>Interests:</span>{' '}
+                  <span style={{ color: '#000000' }}>{extras.interests.join(', ')}</span>
                 </div>
               )}
             </div>
@@ -183,4 +275,3 @@ const ModernB = forwardRef<HTMLDivElement>((props, ref) => {
 ModernB.displayName = 'ModernB'
 
 export default ModernB
-

@@ -16,8 +16,20 @@ const TemplateFrame = forwardRef<HTMLDivElement, TemplateFrameProps>(
       : 'w-full p-8 print:p-0'
 
     return (
-      <div ref={ref} className={`${printClasses} ${className} resume-container`}>
-        <div className="resume-content space-y-6 resume-section">
+      <div 
+        ref={ref} 
+        className={`${printClasses} ${className} resume-container`}
+        style={{
+          backgroundColor: '#ffffff',
+          color: '#000000',
+          fontFamily: 'Inter, Roboto, Lato, Calibri, Helvetica, sans-serif',
+          userSelect: 'text',
+          WebkitUserSelect: 'text',
+          MozUserSelect: 'text',
+          msUserSelect: 'text'
+        }}
+      >
+        <div className="resume-content" style={{ padding: '0', margin: '0', userSelect: 'text', WebkitUserSelect: 'text' }}>
           {children}
         </div>
       </div>
