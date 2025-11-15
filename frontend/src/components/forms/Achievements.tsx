@@ -23,6 +23,11 @@ export default function Achievements() {
   }
 
   const handleInsertSuggestions = (suggestions: string[]) => {
+    if (!suggestions || suggestions.length === 0) {
+      console.warn('No suggestions to insert')
+      return
+    }
+    
     if (currentAchievementId) {
       const achievement = resume.achievements.find((a) => a.id === currentAchievementId)
       if (achievement) {
@@ -32,7 +37,11 @@ export default function Achievements() {
           ? `${currentDesc}\n${newDesc}`
           : newDesc
         updateAchievement(currentAchievementId, { description: updatedDesc })
+      } else {
+        console.error('Achievement not found:', currentAchievementId)
       }
+    } else {
+      console.error('No achievement ID set for insertion')
     }
   }
 

@@ -10,6 +10,7 @@ python-multipart
 aiofiles
 aiolimiter
 requests
+email-validator
 pytest
 pytest-asyncio
 pytest-cov

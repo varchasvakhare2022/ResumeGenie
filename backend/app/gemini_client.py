@@ -180,7 +180,7 @@ async def _make_gemini_http_request(
 
 async def call_gemini_api(
     prompt: str,
-    model: str = "gemini-pro",
+    model: str = "gemini-2.0-flash",
     temperature: float = 0.7,
     max_tokens: int = 2048,
 ) -> str:
@@ -193,7 +193,7 @@ async def call_gemini_api(
     
     Args:
         prompt: The prompt text to send to Gemini
-        model: The Gemini model to use (default: "gemini-pro")
+        model: The Gemini model to use (default: "gemini-2.0-flash")
         temperature: Sampling temperature (0.0 to 1.0)
         max_tokens: Maximum tokens to generate
     
@@ -223,6 +223,7 @@ async def call_gemini_api(
     prompt = sanitize_text(prompt, MAX_TEXT_LENGTH * 2)  # Allow longer prompts for AI
     
     # Construct the Gemini API endpoint
+    # Use v1beta for compatibility (v1 may not have all models)
     base_url = "https://generativelanguage.googleapis.com"
     endpoint = f"/v1beta/models/{model}:generateContent"
     url = f"{base_url}{endpoint}"

@@ -25,13 +25,28 @@ export default function Summary() {
   }, 400)
 
   const handleInsertSuggestions = (suggestions: string[]) => {
+    if (!suggestions || suggestions.length === 0) {
+      console.warn('No suggestions to insert')
+      return
+    }
+    
     const currentSummary = summaryValue || ''
     // For summary, combine suggestions into a cohesive paragraph
     const newSummary = currentSummary
       ? `${currentSummary} ${suggestions.join(' ')}`
       : suggestions.join(' ')
-    setValue('summary', newSummary, { shouldValidate: true })
+    
+    // Update both form and store
+    setValue('summary', newSummary, { shouldValidate: true, shouldDirty: true })
     updateSummary(newSummary)
+    
+    // Force form to recognize the change
+    setTimeout(() => {
+      const formValue = watch('summary')
+      if (formValue !== newSummary) {
+        setValue('summary', newSummary, { shouldValidate: true })
+      }
+    }, 50)
   }
 
   return (

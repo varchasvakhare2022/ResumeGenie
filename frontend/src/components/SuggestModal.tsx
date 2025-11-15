@@ -30,7 +30,8 @@ export default function SuggestModal({
   if (!isOpen) return null
 
   const handleGenerate = async () => {
-    if (!sourceText.trim()) {
+    // Allow generation even with empty sourceText for some tasks like summary
+    if (!sourceText.trim() && task !== 'summary') {
       setError('Please provide source text')
       return
     }
@@ -43,7 +44,7 @@ export default function SuggestModal({
     try {
       const request: SuggestRequest = {
         task,
-        sourceText: sourceText.trim(),
+        sourceText: sourceText.trim() || (task === 'summary' ? 'Generate a professional summary' : ''),
         role: role.trim() || undefined,
         level: level || undefined,
         jobDesc: jobDesc.trim() || undefined,
@@ -72,12 +73,20 @@ export default function SuggestModal({
   const handleInsert = () => {
     const selected = suggestions.filter((_, index) => selectedSuggestions.has(index))
     if (selected.length > 0) {
-      onInsert(selected)
-      onClose()
-      // Reset state
-      setSuggestions([])
-      setSelectedSuggestions(new Set())
-      setError(null)
+      try {
+        onInsert(selected)
+        onClose()
+      } catch (error) {
+        console.error('Error inserting suggestions:', error)
+        setError('Failed to insert suggestions. Please try again.')
+      } finally {
+        // Reset state after a brief delay to allow insertion to complete
+        setTimeout(() => {
+          setSuggestions([])
+          setSelectedSuggestions(new Set())
+          setError(null)
+        }, 100)
+      }
     }
   }
 
@@ -159,8 +168,8 @@ export default function SuggestModal({
           {/* Generate button */}
           <button
             onClick={handleGenerate}
-            disabled={loading || !sourceText.trim()}
-            className="w-full bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            disabled={loading}
+            className="w-full bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
           >
             {loading ? (
               <>
@@ -217,8 +226,8 @@ export default function SuggestModal({
           {suggestions.length > 0 && (
             <button
               onClick={handleInsert}
-              disabled={selectedSuggestions.size === 0}
-              className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              disabled={selectedSuggestions.size === 0 || loading}
+              className="px-5 py-2.5 bg-brand-primary text-white rounded-md hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium transition-colors"
             >
               Insert Selected ({selectedSuggestions.size})
             </button>

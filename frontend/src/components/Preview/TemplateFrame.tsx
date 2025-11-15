@@ -13,7 +13,7 @@ const TemplateFrame = forwardRef<HTMLDivElement, TemplateFrameProps>(
     // Print styles
     const printClasses = forPrint
       ? `resume-print-preview ${paperSize.toLowerCase()} margin-${marginSize}`
-      : 'bg-white shadow-lg rounded-lg p-8'
+      : 'w-full p-8 print:p-0'
 
     return (
       <div ref={ref} className={`${printClasses} ${className} resume-container`}>

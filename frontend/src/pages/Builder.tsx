@@ -85,16 +85,16 @@ export default function Builder() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">ResumeGenie</h1>
-            <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Toolbar */}
+      <div className="bg-white border-b border-gray-200 sticky top-20 z-40 shadow-sm">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            <h1 className="text-2xl font-bold text-gray-900">Resume Builder</h1>
+            <div className="flex items-center gap-3">
               <button
                 onClick={loadDemoResume}
-                className="flex items-center gap-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <Download size={18} />
                 Load Demo
@@ -102,7 +102,7 @@ export default function Builder() {
               <ExportButton contentRef={previewRef} />
             </div>
           </div>
-          <div className="mt-4">
+          <div className="pb-4">
             <TemplatePicker
               selectedTemplate={selectedTemplate}
               onTemplateChange={setSelectedTemplate}
@@ -111,12 +111,13 @@ export default function Builder() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left: Form */}
-          <div className="space-y-6">
+      {/* Main Content */}
+      <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left: Form - Takes 5 columns */}
+          <div className="lg:col-span-5 space-y-6">
             {/* Stepper */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <Stepper
                 steps={STEPS}
                 currentStep={currentStep}
@@ -125,55 +126,67 @@ export default function Builder() {
             </div>
 
             {/* Form Content */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <StepHeader
                 title={STEPS[currentStep]}
                 step={currentStep + 1}
                 totalSteps={STEPS.length}
               />
-              {renderStepContent()}
+              <div className="mt-6">
+                {renderStepContent()}
+              </div>
 
               {/* Navigation */}
-              <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={handlePrevious}
-                  disabled={currentStep === 0}
-                  className="flex items-center gap-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft size={20} />
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={currentStep === STEPS.length - 1}
-                  className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                  Next
-                  <ChevronRight size={20} />
-                </button>
+              <div className={`flex items-center mt-8 pt-6 border-t border-gray-200 ${currentStep === 0 ? 'justify-end' : 'justify-between'}`}>
+                {currentStep > 0 && (
+                  <button
+                    type="button"
+                    onClick={handlePrevious}
+                    className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <ChevronLeft size={20} />
+                    Previous
+                  </button>
+                )}
+                {currentStep < STEPS.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium bg-brand-primary text-white rounded-lg hover:bg-blue-600 transition-colors ml-auto"
+                  >
+                    Next
+                    <ChevronRight size={20} />
+                  </button>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Right: Preview & ATS */}
-          <div className="space-y-6">
-            {/* Preview */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Live Preview</h2>
+          {/* Right: Preview & ATS - Takes 7 columns */}
+          <div className="lg:col-span-7 flex flex-col space-y-6">
+            {/* Preview - Fixed height container */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-[calc(100vh-220px)] min-h-[600px] max-h-[800px]">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
+                <h2 className="text-lg font-semibold text-gray-900">Live Preview</h2>
               </div>
-              <div className="overflow-auto max-h-[calc(100vh-400px)] border border-gray-200 rounded-lg p-4 bg-gray-50">
-                {renderPreview()}
+              <div className="flex-1 overflow-hidden min-h-0">
+                <div className="h-full overflow-y-auto bg-gray-50 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  <div className="p-4 md:p-6">
+                    <div className="bg-white shadow-lg rounded-lg w-full">
+                      {renderPreview()}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* ATS Panel */}
-            <ATSPanel />
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <ATSPanel />
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

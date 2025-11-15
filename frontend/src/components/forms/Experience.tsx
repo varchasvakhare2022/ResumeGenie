@@ -27,6 +27,11 @@ export default function Experience() {
   }
 
   const handleInsertSuggestions = (suggestions: string[]) => {
+    if (!suggestions || suggestions.length === 0) {
+      console.warn('No suggestions to insert')
+      return
+    }
+    
     if (currentExpId) {
       const exp = resume.experience.find((e) => e.id === currentExpId)
       if (exp) {
@@ -42,7 +47,11 @@ export default function Experience() {
           ? `${currentDesc}\n${newDesc}`
           : newDesc
         updateExperience(currentExpId, { description: updatedDesc })
+      } else {
+        console.error('Experience not found:', currentExpId)
       }
+    } else {
+      console.error('No experience ID set for insertion')
     }
   }
 

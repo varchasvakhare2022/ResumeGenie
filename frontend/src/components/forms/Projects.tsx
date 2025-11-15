@@ -25,6 +25,11 @@ export default function Projects() {
   }
 
   const handleInsertSuggestions = (suggestions: string[]) => {
+    if (!suggestions || suggestions.length === 0) {
+      console.warn('No suggestions to insert')
+      return
+    }
+    
     if (currentProjectId) {
       const project = resume.projects.find((p) => p.id === currentProjectId)
       if (project) {
@@ -34,7 +39,11 @@ export default function Projects() {
           ? `${currentDesc}\n${newDesc}`
           : newDesc
         updateProject(currentProjectId, { description: updatedDesc })
+      } else {
+        console.error('Project not found:', currentProjectId)
       }
+    } else {
+      console.error('No project ID set for insertion')
     }
   }
 

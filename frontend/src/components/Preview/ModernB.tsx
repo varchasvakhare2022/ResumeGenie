@@ -7,7 +7,7 @@ const ModernB = forwardRef<HTMLDivElement>((props, ref) => {
   const { personal, summary, experience, education, skills, projects, achievements, extras } = resume
 
   return (
-    <TemplateFrame ref={ref} className="max-w-4xl mx-auto bg-gradient-to-br from-blue-50 to-white">
+    <TemplateFrame ref={ref} className="w-full max-w-full bg-gradient-to-br from-blue-50 to-white">
       <div className="space-y-8 resume-section">
         {/* Header with colored background */}
         <div className="bg-brand-primary text-white p-6 rounded-lg">
