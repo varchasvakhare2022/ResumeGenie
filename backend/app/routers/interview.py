@@ -104,12 +104,14 @@ async def generate_technical_questions(
     count: int
 ) -> List[InterviewQuestion]:
     """Generate technical interview questions."""
+    job_section = ("No specific job description provided. Generate general technical questions based on the resume."
+                   if not job_desc else "Job Description:\n" + job_desc)
     prompt = f"""You are an expert technical interviewer. Based on the following resume and job description, generate {count} technical interview questions that would be asked for this position.
 
 Resume:
 {resume_summary}
 
-{f"Job Description:\n{job_desc}" if job_desc else "No specific job description provided. Generate general technical questions based on the resume."}
+{job_section}
 
 Generate {count} technical questions that:
 1. Test knowledge of technologies mentioned in the resume
@@ -197,12 +199,14 @@ async def generate_behavioral_questions(
     count: int
 ) -> List[InterviewQuestion]:
     """Generate behavioral interview questions."""
+    job_section = ("No specific job description provided. Generate general behavioral questions based on the resume."
+                   if not job_desc else "Job Description:\n" + job_desc)
     prompt = f"""You are an expert behavioral interviewer. Based on the following resume and job description, generate {count} behavioral interview questions using the STAR method (Situation, Task, Action, Result).
 
 Resume:
 {resume_summary}
 
-{f"Job Description:\n{job_desc}" if job_desc else "No specific job description provided. Generate general behavioral questions based on the resume."}
+{job_section}
 
 Generate {count} behavioral questions that:
 1. Are based on common STAR interview questions (teamwork, leadership, problem-solving, conflict resolution, etc.)
