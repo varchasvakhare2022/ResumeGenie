@@ -4,6 +4,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.config import settings
 from typing import Optional
 import orjson
+import certifi
 
 
 # Module-level cached client
@@ -36,7 +37,7 @@ async def get_db() -> Optional[AsyncIOMotorClient]:
         tls_kwargs.update({
             "tls": True,
             "tlsAllowInvalidCertificates": False,
-            "tlsCAFile": "/etc/ssl/certs/ca-certificates.crt",
+            "tlsCAFile": certifi.where(),
         })
         _client = AsyncIOMotorClient(settings.MONGODB_URI, **tls_kwargs)
         # Test connection
