@@ -1,8 +1,9 @@
 """ATS (Applicant Tracking System) router for resume analysis."""
 import re
-from typing import List, Set, Dict, Any
-from fastapi import APIRouter, HTTPException
+from typing import List, Set, Dict, Any, Optional
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from app.schemas import ATSRequest, ATSResponse, Resume, Experience, Achievement
+from app.utils_parse import parse_resume_file
 
 router = APIRouter()
 
@@ -506,3 +507,182 @@ async def get_ats_score(request: ATSRequest):
 async def analyze_resume(request: ATSRequest):
     """Detailed resume analysis (alias for /score)."""
     return await get_ats_score(request)
+
+
+@router.post("/score-file", response_model=ATSResponse)
+async def get_ats_score_from_file(
+    file: UploadFile = File(...),
+    jobDesc: Optional[str] = Form(None)
+):
+    """
+    Analyze resume from uploaded file against job description and provide ATS score.
+    
+    Accepts PDF or DOCX files. Extracts text from the file and analyzes it.
+    """
+    # Validate file type
+    allowed_types = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+        'pdf',
+        'docx',
+        'doc'
+    ]
+    
+    file_type = file.content_type or ''
+    file_ext = file.filename.split('.')[-1].lower() if file.filename else ''
+    
+    if file_type not in allowed_types and file_ext not in ['pdf', 'docx', 'doc']:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type. Please upload a PDF or DOCX file."
+        )
+    
+    # Validate file size (max 5MB)
+    file_content = await file.read()
+    if len(file_content) > 5 * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail="File size must be less than 5MB"
+        )
+    
+    # Parse file
+    try:
+        resume_text = await parse_resume_file(file_content, file_type or file_ext)
+        if not resume_text or len(resume_text.strip()) < 100:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not extract sufficient text from the file. Please ensure the file contains selectable text."
+            )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to parse file: {str(e)}"
+        )
+    
+    # For file-based analysis, we'll analyze the text directly
+    # Since we don't have structured Resume object, we'll score based on text analysis
+    job_desc = jobDesc or ""
+    
+    # Calculate keyword score
+    keyword_result = calculate_keyword_score(resume_text, job_desc)
+    
+    # Calculate verb score from text
+    verb_count = count_action_verbs(resume_text)
+    if verb_count >= MIN_ACTION_VERBS * 3:
+        verbs_score = 100
+    elif verb_count >= MIN_ACTION_VERBS * 2:
+        verbs_score = 80
+    elif verb_count >= MIN_ACTION_VERBS:
+        verbs_score = 60
+    elif verb_count > 0:
+        verbs_score = 40
+    else:
+        verbs_score = 20
+    
+    # Calculate metrics score
+    metric_count = count_quantitative_metrics(resume_text)
+    if metric_count >= MIN_METRICS * 3:
+        metrics_score = 100
+    elif metric_count >= MIN_METRICS * 2:
+        metrics_score = 80
+    elif metric_count >= MIN_METRICS:
+        metrics_score = 60
+    elif metric_count > 0:
+        metrics_score = 40
+    else:
+        metrics_score = 20
+    
+    # For file-based, we'll estimate sections score
+    sections_present = {
+        'personal': bool(re.search(r'\b(email|phone|contact)\b', resume_text, re.I)),
+        'experience': bool(re.search(r'\b(experience|work|employment)\b', resume_text, re.I)),
+        'education': bool(re.search(r'\b(education|degree|university|college)\b', resume_text, re.I)),
+        'skills': bool(re.search(r'\b(skills|competencies|technologies)\b', resume_text, re.I)),
+    }
+    sections_score = sum([
+        4 if sections_present.get('personal') else 0,
+        6 if sections_present.get('experience') else 0,
+        4 if sections_present.get('education') else 0,
+        4 if sections_present.get('skills') else 0,
+    ])
+    
+    # Experience score based on text
+    has_experience = sections_present.get('experience', False)
+    experience_score = 50 if has_experience else 0
+    if has_experience and verb_count >= MIN_ACTION_VERBS:
+        experience_score += 30
+    if metric_count >= MIN_METRICS:
+        experience_score += 20
+    experience_score = min(100, experience_score)
+    
+    # Calculate weighted overall score
+    overall_score = int(
+        keyword_result['score'] * WEIGHT_KEYWORDS +
+        verbs_score * WEIGHT_VERBS +
+        metrics_score * WEIGHT_METRICS +
+        sections_score * WEIGHT_SECTIONS +
+        experience_score * WEIGHT_EXPERIENCE
+    )
+    overall_score = max(0, min(100, overall_score))
+    
+    # Build breakdown
+    breakdown = {
+        'keywords': keyword_result['score'],
+        'verbs': verbs_score,
+        'metrics': metrics_score,
+        'sections': sections_score,
+        'experience': experience_score,
+        'details': {
+            'keywords': {
+                'matched_count': keyword_result['matched_count'],
+                'total_keywords': keyword_result['total_keywords'],
+                'missing_keywords': keyword_result['missing_keywords'][:5]
+            },
+            'verbs': {
+                'count': verb_count,
+                'recommended': MIN_ACTION_VERBS
+            },
+            'metrics': {
+                'count': metric_count,
+                'recommended': MIN_METRICS
+            },
+            'sections': sections_present,
+            'experience': {
+                'count': 1 if has_experience else 0,
+                'has_descriptions': has_experience,
+                'has_dates': bool(re.search(r'\d{4}', resume_text))
+            }
+        }
+    }
+    
+    # Generate tips
+    tips = []
+    if keyword_result['score'] < 60 and job_desc:
+        missing = keyword_result.get('missing_keywords', [])
+        if missing:
+            tips.append(f"Add these keywords: {', '.join(missing[:5])}")
+    
+    if verbs_score < 60:
+        tips.append(f"Use more action verbs (found {verb_count}, recommended: {MIN_ACTION_VERBS}+)")
+        tips.append("Start bullet points with action verbs like 'Developed', 'Managed', 'Led'")
+    
+    if metrics_score < 60:
+        tips.append(f"Add quantitative metrics (found {metric_count}, recommended: {MIN_METRICS}+)")
+        tips.append("Include numbers, percentages, and specific achievements")
+    
+    if sections_score < 15:
+        missing = [k for k, v in sections_present.items() if not v]
+        if missing:
+            tips.append(f"Ensure these sections are clearly labeled: {', '.join(missing)}")
+    
+    if not tips:
+        tips.append("Your resume looks good! Consider adding more specific achievements and metrics.")
+    
+    return ATSResponse(
+        score=overall_score,
+        breakdown=breakdown,
+        tips=tips
+    )

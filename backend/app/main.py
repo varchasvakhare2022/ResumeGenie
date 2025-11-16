@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import suggest, ats, resumes
+from app.routers import suggest, ats, resumes, interview
 from app.db import connect_to_mongo, close_mongo_connection
 
 # Configure logging
@@ -45,6 +45,7 @@ app.add_middleware(
 app.include_router(suggest.router, prefix="/api/suggest", tags=["suggestions"])
 app.include_router(ats.router, prefix="/api/ats", tags=["ats"])
 app.include_router(resumes.router, prefix="/api/resumes", tags=["resumes"])
+app.include_router(interview.router, prefix="/api/interview", tags=["interview"])
 
 
 @app.get("/")

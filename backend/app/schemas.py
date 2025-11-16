@@ -397,3 +397,45 @@ class SuggestionRequest(BaseModel):
 class SuggestionResponse(BaseModel):
     """Legacy suggestion response schema."""
     suggestions: List[str] = Field(default_factory=list)
+
+
+# ============================================================================
+# Interview Questions Schemas
+# ============================================================================
+
+class InterviewQuestion(BaseModel):
+    """Single interview question with suggested answer."""
+    question: str = Field(..., min_length=1, max_length=500, description="Interview question")
+    suggested_answer: str = Field(..., min_length=1, max_length=2000, description="Suggested answer")
+    category: str = Field(..., description="Question category (technical or behavioral)")
+
+    @field_validator('question', 'suggested_answer', mode='before')
+    @classmethod
+    def sanitize_text_fields(cls, v):
+        """Sanitize text fields."""
+        if v is None:
+            return None
+        max_len = 2000 if len(str(v)) > 500 else 500
+        return sanitize_text(str(v), max_len)
+
+
+class InterviewQuestionsRequest(BaseModel):
+    """Request schema for interview questions generation."""
+    resume: Resume = Field(..., description="Resume for generating questions")
+    jobDesc: Optional[str] = Field(None, max_length=MAX_TEXT_LENGTH, description="Job description for targeted questions")
+    numTechQuestions: int = Field(5, ge=1, le=20, description="Number of technical questions to generate")
+    numBehavioralQuestions: int = Field(5, ge=1, le=20, description="Number of behavioral questions to generate")
+
+    @field_validator('jobDesc', mode='before')
+    @classmethod
+    def sanitize_job_desc(cls, v):
+        """Sanitize job description field."""
+        if v is None:
+            return None
+        return sanitize_text(str(v), MAX_TEXT_LENGTH)
+
+
+class InterviewQuestionsResponse(BaseModel):
+    """Response schema for interview questions."""
+    technical_questions: List[InterviewQuestion] = Field(default_factory=list, description="Technical questions")
+    behavioral_questions: List[InterviewQuestion] = Field(default_factory=list, description="Behavioral questions")
