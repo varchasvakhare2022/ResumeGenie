@@ -29,8 +29,16 @@ async def get_db() -> Optional[AsyncIOMotorClient]:
         return _client
     
     try:
-        # Create new client
-        _client = AsyncIOMotorClient(settings.MONGODB_URI)
+        # Create new client with explicit TLS settings to work in minimal containers
+        tls_kwargs = {}
+        # If connecting to MongoDB Atlas or any TLS endpoint, ensure CA bundle is available
+        # Using Debian's default CA bundle path
+        tls_kwargs.update({
+            "tls": True,
+            "tlsAllowInvalidCertificates": False,
+            "tlsCAFile": "/etc/ssl/certs/ca-certificates.crt",
+        })
+        _client = AsyncIOMotorClient(settings.MONGODB_URI, **tls_kwargs)
         # Test connection
         await _client.admin.command('ping')
         return _client
