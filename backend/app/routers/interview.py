@@ -1,5 +1,5 @@
 """Interview questions router for generating interview questions based on resume and job description."""
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form
 from app.schemas import (
     InterviewQuestionsRequest,
     InterviewQuestionsResponse,
@@ -13,6 +13,7 @@ from app.utils_parse import parse_resume_file
 from typing import List
 import json
 import re
+import logging
 
 router = APIRouter()
 
@@ -106,19 +107,27 @@ async def generate_technical_questions(
     """Generate technical interview questions."""
     job_section = ("No specific job description provided. Generate general technical questions based on the resume."
                    if not job_desc else "Job Description:\n" + job_desc)
-    prompt = f"""You are an expert technical interviewer. Based on the following resume and job description, generate {count} technical interview questions that would be asked for this position.
+    prompt = f"""You are an expert technical interviewer. Based on the COMPLETE resume content and job description provided below, generate EXACTLY {count} technical interview questions that would be asked for this position.
 
-Resume:
+IMPORTANT: Use ALL information from the resume including:
+- All technologies, frameworks, and tools mentioned
+- All projects and their descriptions
+- All work experience and achievements
+- All skills and certifications
+- Any other relevant technical details
+
+Complete Resume Content:
 {resume_summary}
 
 {job_section}
 
-Generate {count} technical questions that:
-1. Test knowledge of technologies mentioned in the resume
-2. Assess problem-solving abilities
-3. Evaluate technical depth and understanding
-4. Are relevant to the position described
-5. Range from fundamental to advanced concepts
+Generate EXACTLY {count} technical questions that:
+1. Test knowledge of ALL technologies, frameworks, and tools mentioned in the resume
+2. Assess problem-solving abilities based on projects and experience described
+3. Evaluate technical depth and understanding relevant to the candidate's background
+4. Are specifically relevant to the position described in the job description
+5. Range from fundamental to advanced concepts appropriate for the candidate's experience level
+6. Reference specific projects, technologies, or experiences from the resume when relevant
 
 For each question, provide:
 1. The question itself
@@ -136,58 +145,82 @@ Format your response as a JSON array with this structure:
 Return ONLY the JSON array, no additional text before or after."""
 
     try:
+        logger = logging.getLogger(__name__)
+        logger.info(f"Generating {count} technical questions. Resume length: {len(resume_summary)} chars, Job desc length: {len(job_desc)} chars")
+        
         response = await call_gemini_api(
             prompt=prompt,
             temperature=0.7,
-            max_tokens=4000
+            max_tokens=8000  # Increased to allow for more detailed questions and answers
         )
+        
+        logger.info(f"Received response from Gemini API. Response length: {len(response) if response else 0} chars")
+        logger.debug(f"Response preview (first 500 chars): {response[:500] if response else 'None'}")
+        
+        # Check if response is empty or None
+        if not response or not response.strip():
+            logger.error("Empty response from AI service")
+            raise Exception("Empty response from AI service")
         
         # Extract JSON from response
         json_match = re.search(r'\[.*\]', response, re.DOTALL)
         if json_match:
             json_str = json_match.group(0)
-            questions_data = json.loads(json_str)
+            try:
+                questions_data = json.loads(json_str)
+                logger.info(f"Successfully parsed JSON. Found {len(questions_data)} questions in response")
+            except json.JSONDecodeError as e:
+                # If JSON parsing fails, log and fall through to text parsing
+                logger.warning(f"Failed to parse JSON from response: {e}. Response preview: {response[:200]}")
+                json_match = None  # Force fallback to text parsing
             
-            questions = []
-            for q_data in questions_data:
-                if isinstance(q_data, dict) and 'question' in q_data and 'suggested_answer' in q_data:
-                    questions.append(InterviewQuestion(
-                        question=q_data['question'],
-                        suggested_answer=q_data['suggested_answer'],
-                        category='technical'
-                    ))
-            
-            return questions[:count] if questions else []
-        else:
-            # Fallback: try to parse as plain text
-            lines = [line.strip() for line in response.split('\n') if line.strip()]
-            questions = []
-            current_question = None
-            current_answer = []
-            
-            for line in lines:
-                if line.startswith('Q:') or line.startswith('Question:'):
-                    if current_question:
+            if json_match:  # Only if JSON was successfully parsed
+                questions = []
+                for q_data in questions_data:
+                    if isinstance(q_data, dict) and 'question' in q_data and 'suggested_answer' in q_data:
                         questions.append(InterviewQuestion(
-                            question=current_question,
-                            suggested_answer=' '.join(current_answer),
+                            question=q_data['question'],
+                            suggested_answer=q_data['suggested_answer'],
                             category='technical'
                         ))
-                    current_question = line.replace('Q:', '').replace('Question:', '').strip()
-                    current_answer = []
-                elif line.startswith('A:') or line.startswith('Answer:'):
-                    current_answer.append(line.replace('A:', '').replace('Answer:', '').strip())
-                elif current_question:
-                    current_answer.append(line)
-            
-            if current_question:
-                questions.append(InterviewQuestion(
-                    question=current_question,
-                    suggested_answer=' '.join(current_answer) if current_answer else "Answer based on your experience.",
-                    category='technical'
-                ))
-            
-            return questions[:count] if questions else []
+                
+                logger.info(f"Successfully created {len(questions)} technical questions")
+                return questions[:count] if questions else []
+        
+        # Fallback: try to parse as plain text
+        logger.info("Attempting to parse response as plain text (JSON parsing failed or no JSON found)")
+        lines = [line.strip() for line in response.split('\n') if line.strip()]
+        questions = []
+        current_question = None
+        current_answer = []
+        
+        for line in lines:
+            if line.startswith('Q:') or line.startswith('Question:'):
+                if current_question:
+                    questions.append(InterviewQuestion(
+                        question=current_question,
+                        suggested_answer=' '.join(current_answer),
+                        category='technical'
+                    ))
+                current_question = line.replace('Q:', '').replace('Question:', '').strip()
+                current_answer = []
+            elif line.startswith('A:') or line.startswith('Answer:'):
+                current_answer.append(line.replace('A:', '').replace('Answer:', '').strip())
+            elif current_question:
+                current_answer.append(line)
+        
+        if current_question:
+            questions.append(InterviewQuestion(
+                question=current_question,
+                suggested_answer=' '.join(current_answer) if current_answer else "Answer based on your experience.",
+                category='technical'
+            ))
+        
+        logger.info(f"Parsed {len(questions)} questions from text format")
+        if not questions:
+            logger.warning(f"No questions extracted. Full response: {response[:1000]}")
+        
+        return questions[:count] if questions else []
             
     except Exception as e:
         raise Exception(f"Failed to generate technical questions: {str(e)}")
@@ -201,18 +234,26 @@ async def generate_behavioral_questions(
     """Generate behavioral interview questions."""
     job_section = ("No specific job description provided. Generate general behavioral questions based on the resume."
                    if not job_desc else "Job Description:\n" + job_desc)
-    prompt = f"""You are an expert behavioral interviewer. Based on the following resume and job description, generate {count} behavioral interview questions using the STAR method (Situation, Task, Action, Result).
+    prompt = f"""You are an expert behavioral interviewer. Based on the COMPLETE resume content and job description provided below, generate EXACTLY {count} behavioral interview questions using the STAR method (Situation, Task, Action, Result).
 
-Resume:
+IMPORTANT: Use ALL information from the resume including:
+- All work experience and roles
+- All projects and achievements
+- All leadership and collaboration experiences
+- All challenges overcome and results achieved
+- Any other relevant experiences that demonstrate soft skills
+
+Complete Resume Content:
 {resume_summary}
 
 {job_section}
 
-Generate {count} behavioral questions that:
-1. Are based on common STAR interview questions (teamwork, leadership, problem-solving, conflict resolution, etc.)
-2. Are tailored to the candidate's experience and background
-3. Would be relevant for the position described
-4. Help assess soft skills and cultural fit
+Generate EXACTLY {count} behavioral questions that:
+1. Are based on common STAR interview questions (teamwork, leadership, problem-solving, conflict resolution, time management, etc.)
+2. Are specifically tailored to the candidate's actual experience and background from the resume
+3. Would be highly relevant for the position described in the job description
+4. Help assess soft skills and cultural fit based on the candidate's demonstrated experience
+5. Reference specific experiences, projects, or achievements from the resume when crafting questions
 
 For each question, provide:
 1. The question itself
@@ -230,58 +271,82 @@ Format your response as a JSON array with this structure:
 Return ONLY the JSON array, no additional text before or after."""
 
     try:
+        logger = logging.getLogger(__name__)
+        logger.info(f"Generating {count} behavioral questions. Resume length: {len(resume_summary)} chars, Job desc length: {len(job_desc)} chars")
+        
         response = await call_gemini_api(
             prompt=prompt,
             temperature=0.7,
-            max_tokens=4000
+            max_tokens=8000  # Increased to allow for more detailed questions and answers
         )
+        
+        logger.info(f"Received response from Gemini API. Response length: {len(response) if response else 0} chars")
+        logger.debug(f"Response preview (first 500 chars): {response[:500] if response else 'None'}")
+        
+        # Check if response is empty or None
+        if not response or not response.strip():
+            logger.error("Empty response from AI service")
+            raise Exception("Empty response from AI service")
         
         # Extract JSON from response
         json_match = re.search(r'\[.*\]', response, re.DOTALL)
         if json_match:
             json_str = json_match.group(0)
-            questions_data = json.loads(json_str)
+            try:
+                questions_data = json.loads(json_str)
+                logger.info(f"Successfully parsed JSON. Found {len(questions_data)} questions in response")
+            except json.JSONDecodeError as e:
+                # If JSON parsing fails, log and fall through to text parsing
+                logger.warning(f"Failed to parse JSON from response: {e}. Response preview: {response[:200]}")
+                json_match = None  # Force fallback to text parsing
             
-            questions = []
-            for q_data in questions_data:
-                if isinstance(q_data, dict) and 'question' in q_data and 'suggested_answer' in q_data:
-                    questions.append(InterviewQuestion(
-                        question=q_data['question'],
-                        suggested_answer=q_data['suggested_answer'],
-                        category='behavioral'
-                    ))
-            
-            return questions[:count] if questions else []
-        else:
-            # Fallback: try to parse as plain text
-            lines = [line.strip() for line in response.split('\n') if line.strip()]
-            questions = []
-            current_question = None
-            current_answer = []
-            
-            for line in lines:
-                if line.startswith('Q:') or line.startswith('Question:'):
-                    if current_question:
+            if json_match:  # Only if JSON was successfully parsed
+                questions = []
+                for q_data in questions_data:
+                    if isinstance(q_data, dict) and 'question' in q_data and 'suggested_answer' in q_data:
                         questions.append(InterviewQuestion(
-                            question=current_question,
-                            suggested_answer=' '.join(current_answer),
+                            question=q_data['question'],
+                            suggested_answer=q_data['suggested_answer'],
                             category='behavioral'
                         ))
-                    current_question = line.replace('Q:', '').replace('Question:', '').strip()
-                    current_answer = []
-                elif line.startswith('A:') or line.startswith('Answer:'):
-                    current_answer.append(line.replace('A:', '').replace('Answer:', '').strip())
-                elif current_question:
-                    current_answer.append(line)
-            
-            if current_question:
-                questions.append(InterviewQuestion(
-                    question=current_question,
-                    suggested_answer=' '.join(current_answer) if current_answer else "Use the STAR method: describe a Situation, Task, Action, and Result from your experience.",
-                    category='behavioral'
-                ))
-            
-            return questions[:count] if questions else []
+                
+                logger.info(f"Successfully created {len(questions)} behavioral questions")
+                return questions[:count] if questions else []
+        
+        # Fallback: try to parse as plain text
+        logger.info("Attempting to parse response as plain text (JSON parsing failed or no JSON found)")
+        lines = [line.strip() for line in response.split('\n') if line.strip()]
+        questions = []
+        current_question = None
+        current_answer = []
+        
+        for line in lines:
+            if line.startswith('Q:') or line.startswith('Question:'):
+                if current_question:
+                    questions.append(InterviewQuestion(
+                        question=current_question,
+                        suggested_answer=' '.join(current_answer),
+                        category='behavioral'
+                    ))
+                current_question = line.replace('Q:', '').replace('Question:', '').strip()
+                current_answer = []
+            elif line.startswith('A:') or line.startswith('Answer:'):
+                current_answer.append(line.replace('A:', '').replace('Answer:', '').strip())
+            elif current_question:
+                current_answer.append(line)
+        
+        if current_question:
+            questions.append(InterviewQuestion(
+                question=current_question,
+                suggested_answer=' '.join(current_answer) if current_answer else "Use the STAR method: describe a Situation, Task, Action, and Result from your experience.",
+                category='behavioral'
+            ))
+        
+        logger.info(f"Parsed {len(questions)} questions from text format")
+        if not questions:
+            logger.warning(f"No questions extracted. Full response: {response[:1000]}")
+        
+        return questions[:count] if questions else []
             
     except Exception as e:
         raise Exception(f"Failed to generate behavioral questions: {str(e)}")
@@ -372,15 +437,14 @@ async def generate_interview_questions(
 @router.post("/generate-file", response_model=InterviewQuestionsResponse)
 async def generate_interview_questions_from_file(
     http_request: Request,
-    file: "UploadFile" = "File(...)",  # type: ignore[assignment]
-    jobDesc: str | None = "Form(None)"  # type: ignore[assignment]
+    file: UploadFile = File(...),
+    jobDesc: str | None = Form(None),
+    numTechQuestions: int = Form(5),
+    numBehavioralQuestions: int = Form(5)
 ):
     """
     Generate interview questions using an uploaded resume file (PDF/DOCX) and optional job description.
     """
-    # Local imports to avoid FastAPI type issues in annotations above
-    from fastapi import UploadFile, File, Form  # noqa: WPS433
-
     # Check AI availability
     if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY.strip() == "":
         raise HTTPException(
@@ -433,8 +497,16 @@ async def generate_interview_questions_from_file(
     if not resume_text or len(resume_text.strip()) < 50:
         raise HTTPException(status_code=400, detail="Unable to extract sufficient text from the resume file.")
 
-    # Build prompts directly from text
-    resume_summary = f"Resume (text extracted):\n{resume_text[:8000]}"  # safety cap
+    # Validate question counts
+    numTechQuestions = max(1, min(20, numTechQuestions))  # Clamp between 1-20
+    numBehavioralQuestions = max(1, min(20, numBehavioralQuestions))  # Clamp between 1-20
+
+    # Build prompts using ALL resume text (increase limit to 20000 chars for comprehensive resumes)
+    # Most resumes are under 20000 chars, but we keep a safety cap
+    resume_summary = f"Complete Resume Content (all text extracted from file):\n{resume_text[:20000]}"
+    if len(resume_text) > 20000:
+        resume_summary += f"\n\n[Note: Resume content truncated at 20000 characters. Total length: {len(resume_text)} characters]"
+    
     job_desc = (jobDesc or "").strip()
 
     # Generate questions
@@ -442,12 +514,12 @@ async def generate_interview_questions_from_file(
         technical_questions = await generate_technical_questions(
             resume_summary=resume_summary,
             job_desc=job_desc,
-            count=5,
+            count=numTechQuestions,
         )
         behavioral_questions = await generate_behavioral_questions(
             resume_summary=resume_summary,
             job_desc=job_desc,
-            count=5,
+            count=numBehavioralQuestions,
         )
         return InterviewQuestionsResponse(
             technical_questions=technical_questions,

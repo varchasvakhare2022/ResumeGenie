@@ -5,6 +5,8 @@ pydantic-settings
 python-dotenv
 httpx
 motor
+dnspython
+certifi
 orjson
 python-multipart
 aiofiles

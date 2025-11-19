@@ -180,7 +180,7 @@ async def _make_gemini_http_request(
 
 async def call_gemini_api(
     prompt: str,
-    model: str = "gemini-2.0-flash",
+    model: str = "gemini-pro",
     temperature: float = 0.7,
     max_tokens: int = 2048,
 ) -> str:
@@ -193,7 +193,7 @@ async def call_gemini_api(
     
     Args:
         prompt: The prompt text to send to Gemini
-        model: The Gemini model to use (default: "gemini-2.0-flash")
+        model: The Gemini model to use (default: "gemini-pro")
         temperature: Sampling temperature (0.0 to 1.0)
         max_tokens: Maximum tokens to generate
     
